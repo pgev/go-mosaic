@@ -14,6 +14,9 @@ import (
 	logging "github.com/ipfs/go-log"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/libp2p/go-libp2p/p2p/discovery"
+	"github.com/libp2p/go-libp2p-core/peer"
+	peerstore "github.com/libp2p/go-libp2p-core/peerstore"
+	"github.com/textileio/go-threads/common"
 	util "github.com/textileio/go-threads/util"
 )
 
@@ -27,21 +30,23 @@ var (
 	cyan  = color.New(color.FgHiCyan).SprintFunc()
 	pink  = color.New(color.FgHiMagenta).SprintFunc()
 	red   = color.New(color.FgHiRed).SprintFunc()
+
+	log = logging.Logger("mosaic")
 )
 
 type notifee struct{}
 
 func (n *notifee) HandlePeerFound(p peer.AddrInfo) {
-	net.Host().Peerstore().AddAddrs(p.ID, p.Addrs, pstore.ConnectedAddrTTL)
+	net.Host().Peerstore().AddAddrs(p.ID, p.Addrs, peerstore.ConnectedAddrTTL)
 }
 
 func main() {
 	repo := flag.String("repo", ".threads", "repo location")
 	hostAddrStr := flag.String("hostAddr", "/ip4/0.0.0.0/tcp/4006", "Threads host bind address")
 	debug := flag.Bool("debug", false, "Enable debug logging")
-	flag.parse()
+	flag.Parse()
 
-	hostAddr, err := ma.NewMultiAddress(*hostAddrStr)
+	hostAddr, err := ma.NewMultiaddr(*hostAddrStr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,7 +59,7 @@ func main() {
 	}
 
 	mosaicPath := filepath.Join(*repo, "mosaic")
-	if err = os.MakedirAll(mosaicPath, os.ModePerm); err != nil {
+	if err = os.MkdirAll(mosaicPath, os.ModePerm); err != nil {
 		log.Fatal(err)
 	}
 
@@ -65,13 +70,13 @@ func main() {
 
 	net, err = common.DefaultNetwork(
 		*repo,
-		common.WithNetHostAdrr(hostAddr),
+		common.WithNetHostAddr(hostAddr),
 		common.WithNetDebug(*debug))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer net.Close()
-	net.Bootstrap(util.DefaultBootstrapPeers())
+	net.Bootstrap(util.DefaultBoostrapPeers())
 
 	// Build a multicast DNS service
 	ctx = context.Background()
@@ -86,5 +91,5 @@ func main() {
 	fmt.Println(grey("Welcome to Mosaic experiment 1: chat app with replication rings!!!"))
 	fmt.Println(grey("Your peer ID is ") + green(net.Host().ID().String()))
 
-	sub, err := net.Subscribe(ctx)
+	// sub, err := net.Subscribe(ctx)
 }
