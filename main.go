@@ -91,5 +91,13 @@ func main() {
 	fmt.Println(grey("Welcome to Mosaic experiment 1: chat app with replication rings!!!"))
 	fmt.Println(grey("Your peer ID is ") + green(net.Host().ID().String()))
 
-	// sub, err := net.Subscribe(ctx)
+	sub, err := net.Subscribe(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	go func() {
+		for record := range sub {
+
+		}
+	}
 }
