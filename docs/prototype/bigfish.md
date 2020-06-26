@@ -41,3 +41,18 @@ K_1: type `avatar:logId` user
 V_1: type `string` text message written by user
 
 K_1:(view):V_1
+
+## task breakdown
+
+objective: all members end up seeing all the messages from all the users
+    ie, also user threads which were unknown
+
+two mains:
+
+- member of column
+    - initial member starts the column (column name);
+    - or, on start join a column (get ma skrk from initial member);
+    - add a user (multiaddrss servicekeyreadkey)
+
+- chat app for end user
+    - should start with new thread (user name)
