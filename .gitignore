@@ -1,1 +1,7 @@
-main
+go-mosaic
+
+# Test binary, built with `go test -c`
+*.test
+
+# vscode config folder
+.vscode/

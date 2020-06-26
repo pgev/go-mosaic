@@ -96,8 +96,8 @@ func main() {
 		log.Fatal(err)
 	}
 	go func() {
-		for record := range sub {
-
+		for _ = range sub {
+			fmt.Println("x")
 		}
-	}
+	}()
 }
