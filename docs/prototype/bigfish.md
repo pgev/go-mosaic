@@ -42,7 +42,26 @@ V_1: type `string` text message written by user
 
 K_1:(view):V_1
 
-## task breakdown
+## code breakdown
+
+### Mosaic deamon
+
+`go-mosaic/mosaicd/main.go`
+
+hosts API to control Mosaic daemon on localhost `6500`
+
+hosts ThreadsDB bind address on `4006`
+
+runs public message board as demo example application
+
+### Mosaic API client
+
+
+### BigFish prototype client
+
+example to broadcast unencrypted text messages to public group.
+
+## notes
 
 objective: all members end up seeing all the messages from all the users
     ie, also user threads which were unknown
