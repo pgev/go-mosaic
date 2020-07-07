@@ -2,6 +2,8 @@ package column
 
 import (
 	"context"
+
+	"github.com/mosaicdao/go-mosaic/types"
 )
 
 // Column is the central coordination object for members of a column
@@ -10,8 +12,7 @@ import (
 //   3. to perform a computational task set by the gate (on the objective view of the input), and
 //   4. to output a batch with the resulting key:value pairs
 type Column struct {
-
-	// members map[]
+	members map[types.Address]*Member
 }
 
 func NewColumn(ctx context.Context) (*Column, error) {
