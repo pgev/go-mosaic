@@ -12,7 +12,7 @@ import (
 //   3. to perform a computational task set by the gate (on the objective view of the input), and
 //   4. to output a batch with the resulting key:value pairs
 type Column struct {
-	members map[types.Address]*Member
+	Members map[types.Address]*Member
 }
 
 func NewColumn(ctx context.Context) (*Column, error) {
@@ -23,6 +23,8 @@ func NewColumn(ctx context.Context) (*Column, error) {
 func NewColumnFromAddress() (*Column, error) {
 
 }
+
+func
 
 func newColumn() (*Column, error) {
 

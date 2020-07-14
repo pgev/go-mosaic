@@ -6,8 +6,6 @@ package types
 const (
 	// Ecosystem constants
 	ETHEREUM = 0x01
-	COSMOS =
-	TEZOS
 )
 
 var Names = map[string]uint64{
