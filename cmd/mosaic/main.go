@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	BasePathFlag = "base_path"
+	BasePathFlag = "dir"
 )
 
 func main() {
@@ -36,14 +36,9 @@ func main() {
 }
 
 func setupRootCommand(cmd *cobra.Command, envPrefix, defaultBasePath string) *cobra.Command {
+	cobra.OnInitialize(func() { initEnvironment(envPrefix) })
 	cmd.PersistentFlags().StringP(BasePathFlag, "d", defaultBasePath, "base path for mosaic data and config")
-
-	initEnvironment(envPrefix) // TODO: ? wrap in cobra.OnInitialize
-	// bind all flags to viper
-	if err := viper.BindPFlags(cmd.Flags()); err != nil {
-		panic(err)
-	}
-	cmd.PersistentPreRunE = concatCobraCmdFuncs(loadViper, cmd.PersistentPreRunE)
+	cmd.PersistentPreRunE = concatCobraCmdFuncs(setupViper, cmd.PersistentPreRunE)
 
 	return cmd
 }
@@ -54,7 +49,12 @@ func initEnvironment(envPrefix string) {
 	viper.AutomaticEnv()
 }
 
-func loadViper(cmd *cobra.Command, args []string) error {
+func setupViper(cmd *cobra.Command, args []string) error {
+	// bind all flags to viper
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		panic(err)
+	}
+
 	basePath := viper.GetString(BasePathFlag)
 	// fix base path to decouple from other configuration sources
 	viper.Set(BasePathFlag, basePath)
@@ -64,7 +64,7 @@ func loadViper(cmd *cobra.Command, args []string) error {
 	viper.AddConfigPath(filepath.Join(basePath, "config"))
 
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// ignore ConfigFileNotFound error
 		} else {
 			// return error if config file is found but another error occured
