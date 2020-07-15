@@ -1,17 +1,23 @@
 package node
 
 import (
-	"github.com/ipfs/go-log/logging"
+	logging "github.com/ipfs/go-log"
+
 	cfg "github.com/mosaicdao/go-mosaic/config"
+)
+
+var (
+	log = logging.Logger("node")
 )
 
 // Node
 
 type Node struct {
 	// put DB
+
 }
 
-func NewNode(config *cfg.Config, logger logging.Logger) (*Node, error) {
+func NewNode(config *cfg.Config) (*Node, error) {
 	// create DB etc
 
 	node := &Node{}

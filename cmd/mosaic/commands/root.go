@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 
+	"cloud.google.com/go/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -11,16 +12,17 @@ import (
 
 var (
 	config = cfg.DefaultConfig()
+	log    = logging.Logger("mosaic")
 )
 
 func ParseConfig() (*cfg.Config, error) {
 	config := cfg.DefaultConfig()
-	err := viper.Unmarshal(config) // sets root dir? "--home"
+	err := viper.Unmarshal(config)
 	if err != nil {
 		return nil, err
 	}
-	// config.SetRoot(config.RootDir)
-	// cfg.EnsureRoot(config.RootDir)
+	// config.SetBasePath(config.BasePath)
+	// cfg.EnsureBasePath(config.BasePath)
 	if err = config.ValidateBasic(); err != nil {
 		return nil, fmt.Errorf("error in config file: %v", err)
 	}
@@ -34,7 +36,7 @@ var RootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
+		//TODO : set up logging
 		return nil
 	},
 }
