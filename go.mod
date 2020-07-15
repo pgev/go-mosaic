@@ -3,7 +3,6 @@ module github.com/mosaicdao/go-mosaic
 go 1.14
 
 require (
-	cloud.google.com/go v0.37.0
 	github.com/fatih/color v1.9.0
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/hsanjuan/ipfs-lite v1.1.14

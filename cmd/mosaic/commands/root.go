@@ -1,9 +1,7 @@
 package commands
 
 import (
-	"fmt"
-
-	"cloud.google.com/go/logging"
+	logging "github.com/ipfs/go-log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -23,9 +21,10 @@ func ParseConfig() (*cfg.Config, error) {
 	}
 	// config.SetBasePath(config.BasePath)
 	// cfg.EnsureBasePath(config.BasePath)
-	if err = config.ValidateBasic(); err != nil {
-		return nil, fmt.Errorf("error in config file: %v", err)
-	}
+	// if err = config.ValidateBasic(); err != nil {
+	// 	return nil, fmt.Errorf("error in config file: %v", err)
+	// }
+	return config, nil
 }
 
 var RootCmd = &cobra.Command{

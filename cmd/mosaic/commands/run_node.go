@@ -1,8 +1,11 @@
 package commands
 
 import (
-	"github.com/mosaicdao/go-mosaic/node"
+	"fmt"
+
 	"github.com/spf13/cobra"
+
+	"github.com/mosaicdao/go-mosaic/node"
 )
 
 func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
@@ -11,20 +14,21 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 		Short: "Run a mosaic node",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// check config
-			node, err := nodeProvider(config)
+			_, err := nodeProvider(config)
 			if err != nil {
 				return fmt.Errorf("failed to create new node: %w", err)
 			}
 
-			if err := node.Start(); err != nil {
-				return fmt.Errorf("failed to start node: %w", err)
-			}
+			// if err := node.Start(); err != nil {
+			// 	return fmt.Errorf("failed to start node: %w", err)
+			// }
 
 			// TODO: add node info to log
 			log.Infof("Started node")
 
-
-			node.Wait()
-		}
+			// TODO: await
+			return nil
+		},
 	}
+	return cmd
 }
