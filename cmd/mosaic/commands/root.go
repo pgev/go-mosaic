@@ -1,9 +1,12 @@
 package commands
 
 import (
-	cfg "github.com/mosaicdao/go-mosaic/config"
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	cfg "github.com/mosaicdao/go-mosaic/config"
 )
 
 var (
@@ -12,11 +15,15 @@ var (
 
 func ParseConfig() (*cfg.Config, error) {
 	config := cfg.DefaultConfig()
-	err := viper.Unmarshal(config)
+	err := viper.Unmarshal(config) // sets root dir? "--home"
 	if err != nil {
 		return nil, err
 	}
-	config
+	// config.SetRoot(config.RootDir)
+	// cfg.EnsureRoot(config.RootDir)
+	if err = config.ValidateBasic(); err != nil {
+		return nil, fmt.Errorf("error in config file: %v", err)
+	}
 }
 
 var RootCmd = &cobra.Command{
