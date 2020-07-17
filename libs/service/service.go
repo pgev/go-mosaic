@@ -40,7 +40,7 @@ type Service interface {
 	String() string
 }
 
-type service struct {
+type serviceImpl struct {
 	name      string
 	isRunning bool
 	quit      chan struct{}
@@ -50,21 +50,16 @@ type service struct {
 }
 
 // NewService creates a new service from a servicable object.
-func NewService(name string, impl Servicable) *Service {
-	return &service{
+func NewService(name string, impl Servicable) Service {
+	return &serviceImpl{
 		name:      name,
 		isRunning: false,
 		impl:      impl,
 	}
 }
 
-// IsRunning returns true when the service is running.
-func (bs *service) IsRunning() bool {
-	return bs.isRunning
-}
-
 // Start the service.
-func (bs *service) Start() error {
+func (bs *serviceImpl) Start() error {
 	bs.mux.Lock()
 	defer bs.mux.Unlock()
 	if bs.isRunning {
@@ -81,7 +76,7 @@ func (bs *service) Start() error {
 }
 
 // Stop the service.
-func (bs *service) Stop() error {
+func (bs *serviceImpl) Stop() error {
 	bs.mux.Lock()
 	defer bs.mux.Unlock()
 	if !bs.isRunning {
@@ -98,7 +93,7 @@ func (bs *service) Stop() error {
 }
 
 // Wait blocks until the service is stopped.
-func (bs *serbice) Wait() {
+func (bs *serviceImpl) Wait() {
 	bs.mux.Lock()
 	defer bs.mux.Unlock()
 	if !bs.isRunning {
@@ -109,7 +104,12 @@ func (bs *serbice) Wait() {
 	<-bs.quit
 }
 
+// IsRunning returns true when the service is running.
+func (bs *serviceImpl) IsRunning() bool {
+	return bs.isRunning
+}
+
 // String returns a string representation of the service.
-func (bs *service) String() string {
+func (bs *serviceImpl) String() string {
 	return bs.name
 }
