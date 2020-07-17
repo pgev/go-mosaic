@@ -1,39 +1,115 @@
 package service
 
 import (
-
+	"errors"
+	"sync"
 )
 
-// Service defines a service that can be started and stopped.
-type Service interface {
-	// Start the service
+var (
+	// ErrAlreadyRunning is returned on a call to run an already running service.
+	ErrAlreadyRunning = errors.New("already running")
+)
+
+// Servicable provides Start() and Stop() interfaces to be implemented to become
+// eligible to act as a service.
+type Servicable interface {
+	// Start does not need to be a thread safe. Service implementation will
+	// take care of it.
 	Start() error
-	StartImpl() error
 
-	// Stop the service
+	// Stop does not need to be a thread safe. Service implementation will
+	// take care of it.
 	Stop() error
-	StopImpl()
+}
 
-	// Reset() error
+// Service defines a service that can be started, waited and stopped.
+type Service interface {
+	// Start the service.
+	Start() error
 
-	// IsRunning returns true when the service is running
+	// Stop the service.
+	Stop() error
+
+	// IsRunning returns true when the service is running.
 	IsRunning() bool
 
-	// Quit returns a channel, which is closed once service is stopped.
-	Quit() <-chan struct{}
+	// Wait blocks until the service is stopped.
+	Wait()
 
-	// String representation of the service
+	// String representation of the service.
 	String() string
 }
 
-// BaseService provides Start() and Stop()
-type BaseService struct {
-	name    string
-	// set atomically
-	started uint32
-	stopped uint32
-	quit    chan struct{}
+type serviceImpl struct {
+	name      string
+	isRunning bool
+	quit      chan struct{}
+	mux       sync.Mutex
 
-	// The "subclass" of BaseService
-	impl Service
+	impl Servicable
+}
+
+// NewService creates a new service from a servicable object.
+func NewService(name string, impl Servicable) Service {
+	return &serviceImpl{
+		name:      name,
+		isRunning: false,
+		impl:      impl,
+	}
+}
+
+// Start the service.
+func (bs *serviceImpl) Start() error {
+	bs.mux.Lock()
+	defer bs.mux.Unlock()
+	if bs.isRunning {
+		return ErrAlreadyRunning
+	}
+
+	if err := bs.impl.Start(); err != nil {
+		return err
+	}
+	bs.quit = make(chan struct{})
+	bs.isRunning = true
+
+	return nil
+}
+
+// Stop the service.
+func (bs *serviceImpl) Stop() error {
+	bs.mux.Lock()
+	defer bs.mux.Unlock()
+	if !bs.isRunning {
+		return nil
+	}
+
+	if err := bs.impl.Stop(); err != nil {
+		return err
+	}
+	close(bs.quit)
+	bs.isRunning = false
+
+	return nil
+}
+
+// Wait blocks until the service is stopped.
+func (bs *serviceImpl) Wait() {
+	bs.mux.Lock()
+	defer bs.mux.Unlock()
+	if !bs.isRunning {
+		return
+	}
+	bs.mux.Unlock()
+
+	<-bs.quit
+}
+
+// IsRunning returns true when the service is running.
+func (bs *serviceImpl) IsRunning() bool {
+	return bs.isRunning
+}
+
+// String returns a string representation of the service.
+func (bs *serviceImpl) String() string {
+	return bs.name
 }
