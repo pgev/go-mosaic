@@ -7,17 +7,22 @@ import (
 
 var (
 	// ErrAlreadyRunning is returned on a call to run an already running service.
-	ErrAlreadyRunning = errors.New("already started")
+	ErrAlreadyRunning = errors.New("already running")
 )
 
 // Servicable provides Start() and Stop() interfaces to be implemented to become
 // eligible to act as a service.
 type Servicable interface {
+	// Start does not need to be a thread safe. Service implementation will
+	// take care of it.
 	Start() error
+
+	// Stop does not need to be a thread safe. Service implementation will
+	// take care of it.
 	Stop() error
 }
 
-// Service defines a service that can be started and stopped.
+// Service defines a service that can be started, waited and stopped.
 type Service interface {
 	// Start the service.
 	Start() error
@@ -44,13 +49,22 @@ type service struct {
 	impl Servicable
 }
 
+// NewService creates a new service from a servicable object.
+func NewService(name string, impl Servicable) *Service {
+	return &service{
+		name:      name,
+		isRunning: false,
+		impl:      impl,
+	}
+}
+
 // IsRunning returns true when the service is running.
-func (bs *BaseService) IsRunning() bool {
+func (bs *service) IsRunning() bool {
 	return bs.isRunning
 }
 
 // Start the service.
-func (bs *BaseService) Start() error {
+func (bs *service) Start() error {
 	bs.mux.Lock()
 	defer bs.mux.Unlock()
 	if bs.isRunning {
@@ -60,14 +74,14 @@ func (bs *BaseService) Start() error {
 	if err := bs.impl.Start(); err != nil {
 		return err
 	}
-	bs.isRunning = true
 	bs.quit = make(chan struct{})
+	bs.isRunning = true
 
 	return nil
 }
 
 // Stop the service.
-func (bs *BaseService) Stop() error {
+func (bs *service) Stop() error {
 	bs.mux.Lock()
 	defer bs.mux.Unlock()
 	if !bs.isRunning {
@@ -77,18 +91,25 @@ func (bs *BaseService) Stop() error {
 	if err := bs.impl.Stop(); err != nil {
 		return err
 	}
-	bs.isRunning = false
 	close(bs.quit)
+	bs.isRunning = false
 
 	return nil
 }
 
 // Wait blocks until the service is stopped.
-func (bs *BaseService) Wait() {
+func (bs *serbice) Wait() {
+	bs.mux.Lock()
+	defer bs.mux.Unlock()
+	if !bs.isRunning {
+		return
+	}
+	bs.mux.Unlock()
+
 	<-bs.quit
 }
 
 // String returns a string representation of the service.
-func (bs *BaseService) String() string {
+func (bs *service) String() string {
 	return bs.name
 }
