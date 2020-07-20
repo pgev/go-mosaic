@@ -3,23 +3,27 @@ package service
 import (
 	"errors"
 	"sync"
+
+	logging "github.com/ipfs/go-log"
 )
 
 var (
+	log = logging.Logger("service")
+
 	// ErrAlreadyRunning is returned on a call to run an already running service.
 	ErrAlreadyRunning = errors.New("already running")
 )
 
-// Servicable provides Start() and Stop() interfaces to be implemented to become
-// eligible to act as a service.
+// Servicable provides OnStart() and OnStop() interfaces to be implemented
+// to become eligible to act as a service.
 type Servicable interface {
-	// Start does not need to be a thread safe. Service implementation will
-	// take care of it.
-	Start() error
+	// OnStart is called by ServiceImpl when the Service is started.
+	// An error is returned to be thrown by Start()
+	OnStart() error
 
-	// Stop does not need to be a thread safe. Service implementation will
-	// take care of it.
-	Stop() error
+	// OnStop is called by ServiceImpl when the Service is stopped.
+	// No error should be thrown (TODO: re-evaluate later)
+	OnStop()
 }
 
 // Service defines a service that can be started, waited and stopped.
@@ -28,7 +32,7 @@ type Service interface {
 	Start() error
 
 	// Stop the service.
-	Stop() error
+	Stop()
 
 	// IsRunning returns true when the service is running.
 	IsRunning() bool
@@ -40,76 +44,74 @@ type Service interface {
 	String() string
 }
 
-type serviceImpl struct {
+type BaseService struct {
 	name      string
 	isRunning bool
 	quit      chan struct{}
 	mux       sync.Mutex
-
-	impl Servicable
+	impl      Servicable
 }
 
-// NewService creates a new service from a servicable object.
-func NewService(name string, impl Servicable) Service {
-	return &serviceImpl{
+// NewBaseService creates a new service from a servicable object.
+func NewBaseService(name string, impl Servicable) *BaseService {
+	return &BaseService{
 		name:      name,
 		isRunning: false,
+		quit:      make(chan struct{}),
 		impl:      impl,
 	}
 }
 
 // Start the service.
-func (bs *serviceImpl) Start() error {
-	bs.mux.Lock()
-	defer bs.mux.Unlock()
-	if bs.isRunning {
+func (s *BaseService) Start() error {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	if s.isRunning {
+		log.Errorf("Not starting %v service because already running (impl: %v)", s.name, s.impl)
 		return ErrAlreadyRunning
 	}
 
-	if err := bs.impl.Start(); err != nil {
+	if err := s.impl.OnStart(); err != nil {
+		log.Errorf("Not starting %v service: %w (impl: %v)", s.name, err, s.impl)
 		return err
 	}
-	bs.quit = make(chan struct{})
-	bs.isRunning = true
-
+	s.quit = make(chan struct{})
+	s.isRunning = true
+	log.Infof("Starting service %v (impl: %v).", s.name, s.impl)
 	return nil
 }
 
 // Stop the service.
-func (bs *serviceImpl) Stop() error {
-	bs.mux.Lock()
-	defer bs.mux.Unlock()
-	if !bs.isRunning {
-		return nil
+func (s *BaseService) Stop() {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	if !s.isRunning {
+		return
 	}
 
-	if err := bs.impl.Stop(); err != nil {
-		return err
-	}
-	close(bs.quit)
-	bs.isRunning = false
-
-	return nil
+	s.impl.OnStop()
+	close(s.quit)
+	s.isRunning = false
 }
 
 // Wait blocks until the service is stopped.
-func (bs *serviceImpl) Wait() {
-	bs.mux.Lock()
-	defer bs.mux.Unlock()
-	if !bs.isRunning {
+func (s *BaseService) Wait() {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	if !s.isRunning {
 		return
 	}
-	bs.mux.Unlock()
+	s.mux.Unlock()
 
-	<-bs.quit
+	<-s.quit
 }
 
 // IsRunning returns true when the service is running.
-func (bs *serviceImpl) IsRunning() bool {
-	return bs.isRunning
+func (s *BaseService) IsRunning() bool {
+	return s.isRunning
 }
 
 // String returns a string representation of the service.
-func (bs *serviceImpl) String() string {
-	return bs.name
+func (s *BaseService) String() string {
+	return s.name
 }
