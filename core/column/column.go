@@ -24,8 +24,6 @@ func NewColumnFromAddress() (*Column, error) {
 
 }
 
-func
-
 func newColumn() (*Column, error) {
 
 }
