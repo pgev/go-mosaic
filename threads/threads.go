@@ -1,6 +1,8 @@
 package threads
 
 import (
+	ma "github.com/multiformats/go-multiaddr"
+	cm "github.com/libp2p/go-libp2p-core/connmngr"
 	logging "github.com/ipfs/go-log"
 	"github.com/textileio/go-threads/core/app"
 
@@ -11,7 +13,7 @@ var (
 	log = logging.Logger("threads")
 )
 
-type Threads interface {
+type ThreadsNetwork interface {
 }
 
 // Threads provides a Threads network, and implements Servicable and Service.
@@ -22,16 +24,30 @@ type threads struct {
 	threadsDir string
 }
 
-func NewThreads() Threads {
+func NewThreadsNetwork(
+	threadsDir string,
+	hostAddress *ma.Multiaddr,
+	connectionManager cm.ConnManager
+	opts ...NewThreadsOption
+) ThreadsNetwork {
 	// TODO: take config for OnStart to work
+	config := &NewThreadsConfig{}
+	for _, opt := range opts {
+		if err := opt(config); err != nil {
+			return nil, err
+		}
+	}
+
+
+
 	return &threads{}
 }
 
-func OnStart() error {
+func (t *threads) OnStart() error {
 	// TODO: start ipfslite, logstore etc
 	return nil
 }
 
-func OnStop() {
+func (t *threads) OnStop() {
 
 }
