@@ -1,0 +1,34 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [ master, 202006-bigfish ]
+  pull_request:
+    branches: [ master, 202006-bigfish ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        go: ['1.13', '1.14']
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - run: go version
+
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Get dependencies
+        run: |
+          go get -v -t -d ./...
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./...
