@@ -8,6 +8,7 @@ import (
 type NewThreadsConfig struct {
 	HostAddress       ma.Multiaddr
 	ConnectionManager cm.ConnManager
+
 }
 
 type NewThreadsOption func(config *NewThreadsConfig) error
