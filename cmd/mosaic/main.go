@@ -12,12 +12,12 @@ import (
 	"github.com/spf13/viper"
 
 	cmd "github.com/mosaicdao/go-mosaic/cmd/mosaic/commands"
-	"github.com/mosaicdao/go-mosaic/config"
+	cfg "github.com/mosaicdao/go-mosaic/config"
 	"github.com/mosaicdao/go-mosaic/node"
 )
 
 var (
-	BasePathFlag = "dir"
+	workPathFlag = "work_dir"
 )
 
 func main() {
@@ -28,16 +28,16 @@ func main() {
 	rootCmd.AddCommand(cmd.NewRunNodeCmd(nodeProvider))
 
 	setupRootCommand(rootCmd, "MOSAIC",
-		os.ExpandEnv(filepath.Join("$HOME", config.DefaultMosaicDir)))
+		os.ExpandEnv(filepath.Join("$HOME", cfg.DefaultMosaicDir)))
 
 	if err := rootCmd.Execute(); err != nil {
 		panic(err)
 	}
 }
 
-func setupRootCommand(cmd *cobra.Command, envPrefix, defaultBasePath string) *cobra.Command {
+func setupRootCommand(cmd *cobra.Command, envPrefix, defaultWorkPath string) *cobra.Command {
 	cobra.OnInitialize(func() { initEnvironment(envPrefix) })
-	cmd.PersistentFlags().StringP(BasePathFlag, "d", defaultBasePath, "base path for mosaic data and config")
+	cmd.PersistentFlags().StringP(workPathFlag, "d", defaultWorkPath, "base path for mosaic data and config")
 	cmd.PersistentPreRunE = concatCobraCmdFuncs(setupViper, cmd.PersistentPreRunE)
 
 	return cmd
@@ -55,13 +55,13 @@ func setupViper(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}
 
-	basePath := viper.GetString(BasePathFlag)
-	// fix base path to decouple from other configuration sources
-	viper.Set(BasePathFlag, basePath)
+	workPath := viper.GetString(workPathFlag)
+	// fix work path to decouple from other configuration sources
+	viper.Set(workPathFlag, workPath)
 	viper.SetConfigName("config")
-	// search in base path and /config subdirectory
-	viper.AddConfigPath(basePath)
-	viper.AddConfigPath(filepath.Join(basePath, "config"))
+	// search in work path and /config subdirectory
+	viper.AddConfigPath(workPath)
+	viper.AddConfigPath(filepath.Join(workPath, cfg.DefaultConfigDir))
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

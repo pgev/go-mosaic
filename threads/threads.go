@@ -26,9 +26,9 @@ type threads struct {
 	connectionManager cm.ConnManager
 }
 
-// NewThreadsNetwork provides a ThreadsNetwork interface.
+// NewThreadsNetwork provides a ThreadsNetwork interface to a new instance.
 // The ThreadsNetwork must be started by calling Start() before use.
-func NewThreadsNetwork() ThreadsNetwork {
+func NewThreadsNetwork(config *cfg.ThreadsConfig) ThreadsNetwork {
 	// TODO: take config for OnStart to work
 
 	return &threads{}

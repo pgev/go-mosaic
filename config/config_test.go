@@ -21,15 +21,13 @@ func TestDefaultConfig(t *testing.T) {
 
 	config.NodePrivateKey = "/new_root/test_key.json"
 	assert.Equal("/new_root/test_key.json", config.NodePrivateKeyFile())
-
-	assert.Equal("/foo/config", config.ConfigPath())
-	assert.Equal("/foo/threads", config.ThreadsPath())
 }
 
 func TestValidateConfig(t *testing.T) {
 	assert := assert.New(t)
 
 	config := DefaultConfig()
+	config.SetWorkDir("/foo")
 	assert.NoError(config.ValidateBasic())
 }
 

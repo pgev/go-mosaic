@@ -11,7 +11,7 @@ var (
 	// DefaultMosaicDir is used to set the working directory
 	// WorkDir will default to "$HOME/.mosaic/"
 	DefaultMosaicDir  = ".mosaic"
-	defaultConfigDir  = "config"
+	DefaultConfigDir  = "config"
 	defaultThreadsDir = "threads"
 
 	// by default stored under ConfigDir
@@ -23,10 +23,8 @@ var (
 	defaultLogStoreDir      = "logstore"
 	defaultViewStoreDir     = "viewstore"
 
-	defaultConfigFilePath     = filepath.Join(defaultConfigDir,
-		defaultConfigFileName)
-	defaultNodePrivateKeyPath = filepath.Join(defaultConfigDir,
-		defaultNodePrivateKeyName)
+	defaultConfigFilePath     = filepath.Join(DefaultConfigDir, defaultConfigFileName)
+	defaultNodePrivateKeyPath = filepath.Join(DefaultConfigDir, defaultNodePrivateKeyName)
 	defaultIPFSLiteStorePath  = filepath.Join(defaultThreadsDir, defaultIpfsLiteStoreDir)
 	defaultLogStorePath       = filepath.Join(defaultThreadsDir, defaultLogStoreDir)
 	defaultViewStorePath      = filepath.Join(defaultThreadsDir, defaultViewStoreDir)
@@ -45,8 +43,8 @@ type Config struct {
 // DefaultConfig returns a complete configuration with default values set
 func DefaultConfig() *Config {
 	return &Config{
-		BaseConfig: DefaultBaseConfig(),
-		Threads:    DefaultThreadsConfig(),
+		BaseConfig: defaultBaseConfig(),
+		Threads:    defaultThreadsConfig(),
 	}
 }
 
@@ -62,7 +60,7 @@ func (config *Config) ValidateBasic() error {
 	return nil
 }
 
-// SetWorkDir must be called with an absolute path the working directir
+// SetWorkDir must be called with an absolute path the working directory
 func (config *Config) SetWorkDir(workDir string) {
 	config.BaseConfig.WorkDir = workDir
 	config.Threads.WorkDir = workDir

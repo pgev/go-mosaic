@@ -29,7 +29,7 @@ type ThreadsConfig struct {
 
 // DefaultThreadsConfig returns a configuration for Threads with default values.
 // Note WorkDir is left nil, and should be set once with SetWorkDir() before use.
-func DefaultThreadsConfig() *ThreadsConfig {
+func defaultThreadsConfig() *ThreadsConfig {
 	return &ThreadsConfig{
 		// WorkDir is set in SetWorkDir()
 		IpfsLite:                 defaultIPFSLiteStorePath,
@@ -42,9 +42,9 @@ func DefaultThreadsConfig() *ThreadsConfig {
 	}
 }
 
-// IpfsLiteStorePath provides the absolute path to the ipfs nodes datastore
+// IpfsLitePath provides the absolute path to the ipfs nodes datastore
 // Defaults to "<WorkDir>/threads/ipfslite/"
-func (config ThreadsConfig) IpfsLiteStorePath() string {
+func (config ThreadsConfig) IpfsLitePath() string {
 	return makeAbsolutePath(config.IpfsLite, config.WorkDir)
 }
 

@@ -19,7 +19,7 @@ func ParseConfig() (*cfg.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	// config.SetBasePath(config.BasePath)
+	config.SetWorkDir(config.WorkDir)
 	// cfg.EnsureBasePath(config.BasePath)
 	// if err = config.ValidateBasic(); err != nil {
 	// 	return nil, fmt.Errorf("error in config file: %v", err)
@@ -35,7 +35,6 @@ var RootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		//TODO : set up logging
 		return nil
 	},
 }
