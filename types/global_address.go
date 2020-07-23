@@ -9,10 +9,10 @@ const (
 )
 
 var Names = map[string]uint64{
-	"Ethereum":	ETHEREUM,
+	"Ethereum": ETHEREUM,
 }
 
-var Codes = mapp[uint64]string{
+var Codes = map[uint64]string{
 	ETHEREUM: "Ethereum",
 }
 

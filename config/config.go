@@ -1,14 +1,15 @@
 package config
 
 import (
+	"fmt"
 	"path/filepath"
 
 	logging "github.com/ipfs/go-log"
 )
 
 var (
-	// DefaultMosaicDir is taken as the working directory relative
-	// to the provided working directory, eg. "$HOME/.mosaic/"
+	// DefaultMosaicDir is used to set the working directory
+	// WorkDir will default to "$HOME/.mosaic/"
 	DefaultMosaicDir  = ".mosaic"
 	defaultConfigDir  = "config"
 	defaultThreadsDir = "threads"
@@ -22,8 +23,10 @@ var (
 	defaultLogStoreDir      = "logstore"
 	defaultViewStoreDir     = "viewstore"
 
-	defaultConfigFilePath     = filepath.Join(defaultConfigDir, defaultConfigFileName)
-	defaultNodePrivateKeyPath = filepath.Join(defaultConfigDir, defaultNodePrivateKeyName)
+	defaultConfigFilePath     = filepath.Join(defaultConfigDir,
+		defaultConfigFileName)
+	defaultNodePrivateKeyPath = filepath.Join(defaultConfigDir,
+		defaultNodePrivateKeyName)
 	defaultIPFSLiteStorePath  = filepath.Join(defaultThreadsDir, defaultIpfsLiteStoreDir)
 	defaultLogStorePath       = filepath.Join(defaultThreadsDir, defaultLogStoreDir)
 	defaultViewStorePath      = filepath.Join(defaultThreadsDir, defaultViewStoreDir)
@@ -31,6 +34,7 @@ var (
 	log = logging.Logger("config")
 )
 
+// Config defines the complete configuration for a Mosaic node
 type Config struct {
 	// Base configuration is at the top-level, unnamed
 	BaseConfig `mapstructure:",squash"`
@@ -38,6 +42,7 @@ type Config struct {
 	Threads *ThreadsConfig `mapstructure:"threads"`
 }
 
+// DefaultConfig returns a complete configuration with default values set
 func DefaultConfig() *Config {
 	return &Config{
 		BaseConfig: DefaultBaseConfig(),
@@ -45,17 +50,26 @@ func DefaultConfig() *Config {
 	}
 }
 
+// ValidateBasic will return an error for any of the configuration parameters
+// which don't pass a basic validation check
 func (config *Config) ValidateBasic() error {
-	// TODO: all validation for subsections
+	if err := config.BaseConfig.validateBasic(); err != nil {
+		return err
+	}
+	if err := config.Threads.validateBasic(); err != nil {
+		return fmt.Errorf("Error in [threads] section: %w", err)
+	}
 	return nil
 }
 
+// SetWorkDir must be called with an absolute path the working directir
 func (config *Config) SetWorkDir(workDir string) {
 	config.BaseConfig.WorkDir = workDir
 	config.Threads.WorkDir = workDir
 }
+
 //-----------------------------------------------------------------------------
-//
+// Private functions
 
 func makeAbsolutePath(path, abs string) string {
 	if abs == "" {

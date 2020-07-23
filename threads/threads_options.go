@@ -2,7 +2,7 @@ package threads
 
 import (
 	ma "github.com/multiformats/go-multiaddr"
-	cm "github.com/libp2p/go-libp2p-core/connmngr"
+	cm "github.com/libp2p/go-libp2p-core/connmgr"
 )
 
 type NewThreadsConfig struct {

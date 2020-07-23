@@ -2,7 +2,7 @@ package threads
 
 import (
 	ma "github.com/multiformats/go-multiaddr"
-	cm "github.com/libp2p/go-libp2p-core/connmngr"
+	// cm "github.com/libp2p/go-libp2p-core/connmngr"
 	logging "github.com/ipfs/go-log"
 	"github.com/textileio/go-threads/core/app"
 
@@ -33,13 +33,8 @@ type threads struct {
 // Required options are :
 //  - WithHostAddress
 //  - WithConnectionManager
-func NewThreadsNetwork(
-	config *cfg.ThreadsConfig
-	opts ..NewThreadsOption
-) ThreadsNetwork {
-
+func NewThreadsNetwork(config *cfg.ThreadsConfig, opts ...NewThreadsOption) ThreadsNetwork {
 	// TODO: take config for OnStart to work
-	config := &NewThreadsConfig{}
 	for _, opt := range opts {
 		if err := opt(config); err != nil {
 			return nil, err

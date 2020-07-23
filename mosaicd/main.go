@@ -72,6 +72,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer n.Close()
-	n.Bootstrap(threadsUtil.DefaultBootstrapPeers())
+	n.Bootstrap(threadsUtil.DefaultBoostrapPeers())
 
 }

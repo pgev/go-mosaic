@@ -19,5 +19,6 @@ require (
 	github.com/namsral/flag v1.7.4-pre
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.3.2
+	github.com/stretchr/testify v1.6.1
 	github.com/textileio/go-threads v0.1.20
 )
