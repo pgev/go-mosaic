@@ -1,5 +1,5 @@
 package gate
 
-// PastUser defines past user interface.
-type PastUser interface {
+// PastUser represents a past user input of a gate.
+type PastUser struct {
 }
