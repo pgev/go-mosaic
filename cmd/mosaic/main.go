@@ -27,20 +27,20 @@ func main() {
 
 	rootCmd.AddCommand(cmd.NewRunNodeCmd(nodeProvider))
 
-	setupRootCommand(rootCmd, "MOSAIC",
+	c := setupRootCommand(rootCmd, "MOSAIC",
 		os.ExpandEnv(filepath.Join("$HOME", cfg.DefaultMosaicDir)))
 
-	if err := rootCmd.Execute(); err != nil {
+	if err := c.Execute(); err != nil {
 		panic(err)
 	}
 }
 
-func setupRootCommand(cmd *cobra.Command, envPrefix, defaultWorkPath string) *cobra.Command {
+func setupRootCommand(c *cobra.Command, envPrefix, defaultWorkPath string) *cobra.Command {
 	cobra.OnInitialize(func() { initEnvironment(envPrefix) })
-	cmd.PersistentFlags().StringP(workPathFlag, "d", defaultWorkPath, "base path for mosaic data and config")
-	cmd.PersistentPreRunE = concatCobraCmdFuncs(setupViper, cmd.PersistentPreRunE)
+	c.PersistentFlags().StringP(workPathFlag, "d", defaultWorkPath, "work path for mosaic data and config")
+	c.PersistentPreRunE = concatCobraCmdFuncs(setupViper, c.PersistentPreRunE)
 
-	return cmd
+	return c
 }
 
 func initEnvironment(envPrefix string) {
@@ -52,7 +52,7 @@ func initEnvironment(envPrefix string) {
 func setupViper(cmd *cobra.Command, args []string) error {
 	// bind all flags to viper
 	if err := viper.BindPFlags(cmd.Flags()); err != nil {
-		panic(err)
+		return err
 	}
 
 	workPath := viper.GetString(workPathFlag)

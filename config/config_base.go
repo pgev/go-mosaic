@@ -36,9 +36,6 @@ func (config BaseConfig) NodePrivateKeyFile() string {
 // Private functions
 
 func (config *BaseConfig) validateBasic() error {
-	if config.WorkDir == "" {
-		return errors.New("work_dir cannot be empty")
-	}
 	if config.NodePrivateKey == "" {
 		return errors.New("node_private_key_file cannot be empty")
 	}

@@ -8,6 +8,11 @@ import (
 	"github.com/mosaicdao/go-mosaic/node"
 )
 
+func AddNodeFlags(cmd *cobra.Command) {
+	cmd.Flags().String("threads.host", config.Threads.HostAddressString, "Host address")
+}
+
+
 func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "node",
@@ -23,7 +28,8 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 				return fmt.Errorf("failed to start node: %w", err)
 			}
 
-			fmt.Printf("Hello world from %s", n)
+			fmt.Printf("Hello world from %s \n", n)
+
 			// TODO: add node info to log
 			log.Infof("Started node")
 
@@ -31,5 +37,7 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 			return nil
 		},
 	}
+
+	AddNodeFlags(cmd)
 	return cmd
 }

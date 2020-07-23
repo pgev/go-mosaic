@@ -21,7 +21,7 @@ type ThreadsConfig struct {
 	// Path to View datastore, relative to working dir or absolute
 	ViewStore                string        `mapstructure:"viewstore_dir`
 
-	HostAddressString        string        `mapstructure:"host_address"`
+	HostAddressString        string        `mapstructure:"host"`
 	ConnectionsLowWaterMark  int           `mapstructure:"connections_low_mark"`
 	ConnectionsHighWaterMark int           `mapstructure:"connections_high_mark"`
 	ConnectionsGracePeriod   time.Duration `mapstructure:"connections_grace_period"`

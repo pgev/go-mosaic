@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	logging "github.com/ipfs/go-log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,17 +16,17 @@ var (
 )
 
 func ParseConfig() (*cfg.Config, error) {
-	config := cfg.DefaultConfig()
-	err := viper.Unmarshal(config)
+	conf := cfg.DefaultConfig()
+	err := viper.Unmarshal(conf)
 	if err != nil {
 		return nil, err
 	}
-	config.SetWorkDir(config.WorkDir)
+	conf.SetWorkDir(conf.WorkDir)
 	// cfg.EnsureBasePath(config.BasePath)
-	// if err = config.ValidateBasic(); err != nil {
-	// 	return nil, fmt.Errorf("error in config file: %v", err)
-	// }
-	return config, nil
+	if err = conf.ValidateBasic(); err != nil {
+		return nil, fmt.Errorf("error in config file: %w", err)
+	}
+	return conf, nil
 }
 
 var RootCmd = &cobra.Command{
