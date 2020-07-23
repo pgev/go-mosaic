@@ -1,4 +1,5 @@
 package column
 
-type Member interface {
+// Member struct represents a member of a column.
+type Member struct {
 }
