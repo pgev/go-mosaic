@@ -1,28 +1,14 @@
 package threads
 
 import (
-	ma "github.com/multiformats/go-multiaddr"
 	cm "github.com/libp2p/go-libp2p-core/connmgr"
 )
 
-type NewThreadsConfig struct {
-	HostAddress       ma.Multiaddr
-	ConnectionManager cm.ConnManager
-
-}
-
-type NewThreadsOption func(config *NewThreadsConfig) error
-
-func WithHostAddress(address *ma.Multiaddr) NewThreadsOption {
-	return func(config *NewThreadsConfig) error {
-		config.HostAddress = address
-		return nil
-	}
-}
+type NewThreadsOption func(t *threads) error
 
 func WithConnectionManager(connectionManager cm.ConnManager) NewThreadsOption {
-	return func(config *NewThreadsConfig) error {
-		config.ConnectionManager = connectionManager
+	return func(t *threads) error {
+		t.connectionManager = connectionManager
 		return nil
 	}
 }

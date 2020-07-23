@@ -34,7 +34,7 @@ func (sw *Switch) OnStop() {
 	}
 }
 
-func (sw *Switch) AddReactor(name string, reactor Reactor) Reactor
-func (sw *Switch) RemoveReactor(name string, reactor Reactor)
-func (sw *Switch) Reactors() map[string]Reactor
-func (sw *Switch) Reactor(name string) Reactor
+// func (sw *Switch) AddReactor(name string, reactor Reactor) Reactor
+// func (sw *Switch) RemoveReactor(name string, reactor Reactor)
+// func (sw *Switch) Reactors() map[string]Reactor
+// func (sw *Switch) Reactor(name string) Reactor

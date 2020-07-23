@@ -1,10 +1,9 @@
 package threads
 
 import (
-	ma "github.com/multiformats/go-multiaddr"
-	// cm "github.com/libp2p/go-libp2p-core/connmngr"
 	logging "github.com/ipfs/go-log"
 	"github.com/textileio/go-threads/core/app"
+	cm "github.com/libp2p/go-libp2p-core/connmgr"
 
 	cfg "github.com/mosaicdao/go-mosaic/config"
 	"github.com/mosaicdao/go-mosaic/libs/service"
@@ -23,32 +22,14 @@ type threads struct {
 	service.BaseService
 	app.Net // provides Connection
 
-	config *cfg.ThreadsConfig
-	threadsDir  string // store Mosaic db, default
-	ipfsLiteDir string //
+	config            *cfg.ThreadsConfig
+	connectionManager cm.ConnManager
 }
 
 // NewThreadsNetwork provides a ThreadsNetwork interface.
 // The ThreadsNetwork must be started by calling Start() before use.
-// Required options are :
-//  - WithHostAddress
-//  - WithConnectionManager
-func NewThreadsNetwork(config *cfg.ThreadsConfig, opts ...NewThreadsOption) ThreadsNetwork {
+func NewThreadsNetwork() ThreadsNetwork {
 	// TODO: take config for OnStart to work
-	for _, opt := range opts {
-		if err := opt(config); err != nil {
-			return nil, err
-		}
-	}
-
-	if config.HostAddress == nil {
-		return nil, err
-	}
-
-	if config.ConnectionManager == nil {
-		return nil, err
-	}
-
 
 	return &threads{}
 }
