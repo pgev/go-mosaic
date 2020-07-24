@@ -21,7 +21,7 @@ func NewBaseReactor(name string, impl service.Servicable) *BaseReactor {
 
 func (r *BaseReactor) SetSwitch(sw *Switch) { r.Switch = sw }
 
-func (*BaseReactor) GetChannels() []*ChannelDescriptor { return nil }
+func (*BaseReactor) GetTopics() []*Topic { return nil }
 
 func (*BaseReactor) AddMember(member column.Member)                                     {}
 func (*BaseReactor) RemoveMember(member column.Member)                                  {}

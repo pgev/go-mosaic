@@ -10,9 +10,9 @@ import (
 type Switch struct {
 	service.BaseService
 
-	reactors           map[string]Reactor
-	channelDescriptors []*ChannelDescriptor
-	reactorsByCh       map[byte]Reactor
+	topics            []*Topic
+	reactors          map[string]Reactor
+	reactorsByTopicID map[TopicID]Reactor
 }
 
 func (sw *Switch) OnStart() error {
@@ -34,7 +34,29 @@ func (sw *Switch) OnStop() {
 	}
 }
 
-// func (sw *Switch) AddReactor(name string, reactor Reactor) Reactor
+func (sw *Switch) AddReactor(name string, reactor Reactor) {
+	for _, topic := range reactor.GetTopics() {
+		topicID := topic.ID
+
+		// No two reactors can share the same topic.
+		if sw.reactorsByTopicID[topicID] != nil {
+			panic(
+				fmt.Sprintf(
+					"There is already a reactor (%v) registered for the topic %X",
+					sw.reactorsByTopicID[topicID],
+					topicID,
+				),
+			)
+		}
+
+		sw.topics = append(sw.topics, topic)
+		sw.reactorsByTopicID[topicID] = reactor
+	}
+
+	sw.reactors[name] = reactor
+	reactor.SetSwitch(sw)
+}
+
 // func (sw *Switch) RemoveReactor(name string, reactor Reactor)
 // func (sw *Switch) Reactors() map[string]Reactor
 // func (sw *Switch) Reactor(name string) Reactor

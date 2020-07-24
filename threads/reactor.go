@@ -9,15 +9,17 @@ import (
 type MemberReactor interface {
 	AddMember(member column.Member)
 	RemoveMember(member column.Member)
-	ReceiveFromMember(chID byte, member column.Member, msgBytes []byte)
 	InitMember(member column.Member) column.Member
+
+	ReceiveFromMember(topicID TopicID, member column.Member, msgBytes []byte)
 }
 
 type PastUserReactor interface {
 	AddPastUser(pastUser gate.PastUser)
 	RemovePastUser(pastUser gate.PastUser)
-	ReceiveFromPastUser(chID byte, pastUser gate.PastUser, msgBytes []byte)
 	InitPastUser(pastUser gate.PastUser) gate.PastUser
+
+	ReceiveFromPastUser(chID byte, pastUser gate.PastUser, msgBytes []byte)
 }
 
 type Reactor interface {
@@ -27,5 +29,5 @@ type Reactor interface {
 	PastUserReactor
 
 	SetSwitch(*Switch)
-	GetChannels() []*ChannelDescriptor
+	GetTopics() []*Topic
 }
