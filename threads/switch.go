@@ -35,11 +35,22 @@ func (sw *Switch) OnStop() {
 }
 
 // AddReactor adds a reactor to the switch.
+// The function requires there is no reactor with the same name.
 // The function updates a mapping from a topic id to a reactor based on the reactor's topics.
 // The function updates a mapping from the given reactor name to the reactor.
 // The function requires that no two reactors can share the same topic.
-// The function sets the current object as a switch to the given reactor and returns it.
-func (sw *Switch) AddReactor(name string, reactor Reactor) Reactor {
+// The function sets the current object as a switch to the given reactor.
+func (sw *Switch) AddReactor(name string, reactor Reactor) {
+	if sw.reactors[name] != nil {
+		panic(
+			fmt.Sprintf(
+				"There is already a reactor (%v) registered with the same name %v",
+				sw.reactors[name],
+				name,
+			),
+		)
+	}
+
 	for _, topic := range reactor.GetTopics() {
 		topicID := topic.ID
 
@@ -60,12 +71,44 @@ func (sw *Switch) AddReactor(name string, reactor Reactor) Reactor {
 
 	sw.reactors[name] = reactor
 	reactor.SetSwitch(sw)
-
-	return reactor
 }
 
+// RemoveReactor removes the given reactor from the switch.
+// The function requires that there the given reactor is registered under the given name.
+// The function updates a mapping from a topic id to a reactor based on the reactor's topics.
+// The function sets the given reactor's switch to nil.
 func (sw *Switch) RemoveReactor(name string, reactor Reactor) {
+	if sw.reactors[name] == nil {
+		panic(
+			fmt.Sprintf(
+				"There is no reactor with the given name %v",
+				name,
+			),
+		)
+	}
 
+	if sw.reactors[name] != reactor {
+		panic(
+			fmt.Sprintf(
+				"There is a different reactor (%v) registered with the given name (%v)",
+				sw.reactors[name],
+				name,
+			),
+		)
+	}
+
+	for _, topic := range reactor.GetTopics() {
+		// removes topic
+		for i := 0; i < len(sw.topics); i++ {
+			if topic.ID == sw.topics[i].ID {
+				sw.topics = append(sw.topics[:i], sw.topics[i+1:]...)
+				break
+			}
+		}
+		delete(sw.reactorsByTopicID, topic.ID)
+	}
+	delete(sw.reactors, name)
+	reactor.SetSwitch(nil)
 }
 
 // func (sw *Switch) Reactors() map[string]Reactor
