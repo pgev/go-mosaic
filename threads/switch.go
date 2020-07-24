@@ -15,6 +15,9 @@ type Switch struct {
 	reactorsByTopicID map[TopicID]Reactor
 }
 
+// OnStart implements Servicable.OnStart() by starting the switch and all registered reactors.
+// The function starts all registered reactors sequentially and returns an error and stops
+// if one fails to start. It does not stops the ones already started.
 func (sw *Switch) OnStart() error {
 	// starts reactors
 	for _, reactor := range sw.reactors {
@@ -27,6 +30,7 @@ func (sw *Switch) OnStart() error {
 	return nil
 }
 
+// OnStop implements Servicable.OnStop() by stopping the switch and all registered reactors.
 func (sw *Switch) OnStop() {
 	// stops reactors
 	for _, reactor := range sw.reactors {
@@ -111,5 +115,12 @@ func (sw *Switch) RemoveReactor(name string, reactor Reactor) {
 	reactor.SetSwitch(nil)
 }
 
-// func (sw *Switch) Reactors() map[string]Reactor
-// func (sw *Switch) Reactor(name string) Reactor
+// Reactors returns a mapping of reactors by a registered name.
+func (sw *Switch) Reactors() map[string]Reactor {
+	return sw.reactors
+}
+
+// Reactor returns a registered reactor by a name or nil if there is no one.
+func (sw *Switch) Reactor(name string) Reactor {
+	return sw.reactors[name]
+}
