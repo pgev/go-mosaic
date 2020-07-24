@@ -34,7 +34,12 @@ func (sw *Switch) OnStop() {
 	}
 }
 
-func (sw *Switch) AddReactor(name string, reactor Reactor) {
+// AddReactor adds a reactor to the switch.
+// The function updates a mapping from a topic id to a reactor based on the reactor's topics.
+// The function updates a mapping from the given reactor name to the reactor.
+// The function requires that no two reactors can share the same topic.
+// The function sets the current object as a switch to the given reactor and returns it.
+func (sw *Switch) AddReactor(name string, reactor Reactor) Reactor {
 	for _, topic := range reactor.GetTopics() {
 		topicID := topic.ID
 
@@ -55,8 +60,13 @@ func (sw *Switch) AddReactor(name string, reactor Reactor) {
 
 	sw.reactors[name] = reactor
 	reactor.SetSwitch(sw)
+
+	return reactor
 }
 
-// func (sw *Switch) RemoveReactor(name string, reactor Reactor)
+func (sw *Switch) RemoveReactor(name string, reactor Reactor) {
+
+}
+
 // func (sw *Switch) Reactors() map[string]Reactor
 // func (sw *Switch) Reactor(name string) Reactor
