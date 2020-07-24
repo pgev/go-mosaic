@@ -28,10 +28,7 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 				return fmt.Errorf("failed to start node: %w", err)
 			}
 
-			fmt.Printf("Hello world from %s \n", n)
-
-			// TODO: add node info to log
-			log.Infof("Started node")
+			log.Info("Started node")
 
 			n.Wait()
 			return nil
