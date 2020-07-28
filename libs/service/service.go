@@ -1,6 +1,5 @@
 package service
 
-
 // Servicable provides OnStart() and OnStop() interfaces to be implemented
 // to become eligible to act as a service.
 type Servicable interface {
