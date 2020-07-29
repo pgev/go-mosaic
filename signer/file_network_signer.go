@@ -41,6 +41,8 @@ func GenerateFileNetworkSigner(path string) (*FileNetworkSigner, error) {
 	if err != nil {
 		return nil, err
 	}
+	publicBytes, _ := priv.GetPublic().Bytes()
+	log.Infof("public network key generated: 0x%x", publicBytes)
 	// TODO: store to path
 	networkSigner := &FileNetworkSigner{
 		k:    priv,

@@ -4,6 +4,7 @@ import (
 	logging "github.com/ipfs/go-log"
 	"github.com/textileio/go-threads/core/app"
 	cm "github.com/libp2p/go-libp2p-core/connmgr"
+	"github.com/libp2p/go-libp2p-core/crypto"
 
 	cfg "github.com/mosaicdao/go-mosaic/config"
 	"github.com/mosaicdao/go-mosaic/libs/service"
@@ -28,7 +29,8 @@ type threads struct {
 
 // NewThreadsNetwork provides a ThreadsNetwork interface to a new instance.
 // The ThreadsNetwork must be started by calling Start() before use.
-func NewThreadsNetwork(config *cfg.ThreadsConfig) ThreadsNetwork {
+func NewThreadsNetwork(networkKey crypto.PrivKey,
+	config *cfg.ThreadsConfig) ThreadsNetwork {
 	// TODO: take config for OnStart to work
 
 	return &threads{}
