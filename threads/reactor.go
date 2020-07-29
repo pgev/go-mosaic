@@ -7,11 +7,13 @@ import (
 type Reactor interface {
 	service.Service
 
-	InitDatabus(databus Databus) Databus
-	AddDatabus(databus Databus) error
-	RemoveDatabus(databus Databus)
-	ReceiveFrom(databus Databus, topic Topic, msgBytes []byte)
+	InitSource(source Source) (Source, error)
+	AddSource(source Source) error
 
-	GetTopics() []Topic
+	ReceiveMsg(msg *Message)
+
+	Board() *Board
+	GetTopics() []*Topic
+
 	SetSwitch(*Switch)
 }
