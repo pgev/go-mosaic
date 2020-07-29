@@ -11,11 +11,30 @@ import (
 )
 
 var (
+	// config is first used to add flags to the commands;
+	// on Execute() it is reinitialised to function
+	// the config for params to be unmarshalled into.
 	config = cfg.DefaultConfig()
 	log    = logging.Logger("mosaic")
 )
 
-func ParseConfig() (*cfg.Config, error) {
+var RootCmd = &cobra.Command{
+	Use:   "mosaic",
+	Short: "Mosaic node (data stream processing) in Golang",
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
+		config, err = parseConfig()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	},
+}
+
+//-----------------------------------------------------------------------------
+// Private functions
+
+func parseConfig() (*cfg.Config, error) {
 	conf := cfg.DefaultConfig()
 	err := viper.Unmarshal(conf)
 	if err != nil {
@@ -27,16 +46,4 @@ func ParseConfig() (*cfg.Config, error) {
 		return nil, fmt.Errorf("error in config file: %w", err)
 	}
 	return conf, nil
-}
-
-var RootCmd = &cobra.Command{
-	Use:   "mosaic",
-	Short: "Mosaic node (data stream processing) in Golang",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-		config, err = ParseConfig()
-		if err != nil {
-			return err
-		}
-		return nil
-	},
 }

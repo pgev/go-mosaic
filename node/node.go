@@ -5,6 +5,7 @@ import (
 
 	cfg "github.com/mosaicdao/go-mosaic/config"
 	"github.com/mosaicdao/go-mosaic/libs/service"
+	thr "github.com/mosaicdao/go-mosaic/threads"
 )
 
 var (
@@ -15,19 +16,29 @@ var (
 
 type Node struct {
 	service.BaseService
-	// put DB
+
+	config  *cfg.Config
+
+	threads thr.ThreadsNetwork
 }
 
 func NewNode(config *cfg.Config) (*Node, error) {
 	// create DB etc
 
-	node := &Node{}
+	threads := thr.NewThreadsNetwork(config.Threads)
+
+	node := &Node{
+		config:  config,
+		threads: threads,
+	}
 	node.BaseService = *service.NewBaseService("Node", node)
 
 	return node, nil
 }
 
 func (n *Node) OnStart() error {
+	// TODO: create threads network
+
 	return nil
 }
 
