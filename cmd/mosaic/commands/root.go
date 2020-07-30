@@ -41,7 +41,7 @@ func parseConfig() (*cfg.Config, error) {
 		return nil, err
 	}
 	conf.SetWorkDir(conf.WorkDir)
-	// cfg.EnsureBasePath(config.BasePath)
+	conf.EnsurePaths()
 	if err = conf.ValidateBasic(); err != nil {
 		return nil, fmt.Errorf("error in config file: %w", err)
 	}

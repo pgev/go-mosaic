@@ -5,6 +5,8 @@ import (
 	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
+
+	moos "github.com/mosaicdao/go-mosaic/libs/os"
 )
 
 //-----------------------------------------------------------------------------
@@ -89,6 +91,22 @@ func (config *ThreadsConfig) validateBasic() error {
 	}
 	if config.ConnectionsGracePeriod < 0 {
 		return errors.New("connections_grace_period cannot be negative")
+	}
+	return nil
+}
+
+func (config *ThreadsConfig) ensurePaths() error {
+	// make IPFS Lite dir
+	if err := moos.EnsureDir(config.IpfsLitePath()); err != nil {
+		return err
+	}
+	// make logstore dir
+	if err := moos.EnsureDir(config.LogStorePath()); err != nil {
+		return err
+	}
+	// make viewstore dir
+	if err := moos.EnsureDir(config.ViewStorePath()); err != nil {
+		return err
 	}
 	return nil
 }

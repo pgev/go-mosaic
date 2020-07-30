@@ -66,6 +66,17 @@ func (config *Config) SetWorkDir(workDir string) {
 	config.Threads.WorkDir = workDir
 }
 
+// EnsurePaths creates all paths under working directory (with FilePerm 511)
+func (config *Config) EnsurePaths() error {
+	if err := config.BaseConfig.ensurePaths(); err != nil {
+		return err
+	}
+	if err := config.Threads.ensurePaths(); err != nil {
+		return err
+	}
+	return nil
+}
+
 //-----------------------------------------------------------------------------
 // Private functions
 

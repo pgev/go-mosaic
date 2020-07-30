@@ -30,6 +30,8 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 
 			log.Info("Started node")
 
+			// TODO: catch SIGTERM interrupt
+
 			n.Wait()
 			return nil
 		},
