@@ -28,15 +28,16 @@ type Node struct {
 
 // NewNode creates a new node based on the configuration provided
 func NewNode(config *cfg.Config) (*Node, error) {
-	// create DB etc
-
 	// Generate new random key for libp2p; TODO: load key from disk
 	netKey, err := sgn.GenerateFileNetworkSigner(config.NodePrivateKeyFile())
 	if err != nil {
 		return nil, err
 	}
 
-	threads := thr.NewThreadsNetwork(netKey, config.Threads)
+	threads, err := thr.NewThreadsNetwork(netKey, config.Threads)
+	if err != nil {
+		return nil, err
+	}
 
 	node := &Node{
 		config:     config,

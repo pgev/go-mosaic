@@ -9,8 +9,8 @@ import (
 )
 
 // FileNetworkSigner implements libp2p crypto.PrivKey such that it can sign
-// for the p2p and logs. It panics however when attempting to access the private
-// bytes over Bytes(), Raw() or Equal().
+// for the p2p and logs. It does not panics when attempting to access the private
+// bytes over Bytes(), Raw() or Equal(), because Peerstore copies our private key...
 // FileNetworkSigner is always of key type ed25519 because go-threads
 // explicitly uses ed25519 for signing JWT tokens
 type FileNetworkSigner struct {
@@ -58,19 +58,18 @@ func (ns *FileNetworkSigner) Type() pb.KeyType {
 
 // Bytes will return an error, blocking access to the private key bytes
 func (ns *FileNetworkSigner) Bytes() ([]byte, error) {
-	return ns.denyRawBytesAccess()
+	return ns.k.Bytes()
 }
 
 // Raw will return an error, blocking access to the private key bytes
 func (ns *FileNetworkSigner) Raw() ([]byte, error) {
-	return ns.denyRawBytesAccess()
+	return ns.k.Raw()
 }
 
 // Equals will return an error, because comparison (now) happens on private key
 // and access is restricted
 func (ns *FileNetworkSigner) Equals(o crypto.Key) bool {
-	log.Panic("attempt to access Equal with impl using private key of %v", ns.k.GetPublic())
-	return false
+	return ns.k.Equals(o)
 }
 
 // Sign returns a signature from an input message.
@@ -81,14 +80,4 @@ func (ns *FileNetworkSigner) Sign(msg []byte) ([]byte, error) {
 // GetPublic returns an ed25519 public key from the private key.
 func (ns *FileNetworkSigner) GetPublic() crypto.PubKey {
 	return ns.k.GetPublic()
-}
-
-//------------------------------------------------------------------------------
-// Private functions
-
-func (ns *FileNetworkSigner) denyRawBytesAccess() ([]byte, error) {
-	// while in development, actually panic to make sure no libraries
-	// try to access the bytes of the private key directly
-	log.Panic("attempt to access bytes of private key of %v", ns.k.GetPublic())
-	return nil, ErrPrivateKeyBytesAccessDenied
 }
