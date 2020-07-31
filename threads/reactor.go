@@ -7,13 +7,13 @@ import (
 type Reactor interface {
 	service.Service
 
-	InitSource(source Source) (Source, error)
-	AddSource(source Source) error
+	InitSource(source *Source) error
+	AddSource(source *Source) error
 
 	ReceiveMsg(msg *Message)
 
-	Board() *Board
-	GetTopics() []*Topic
+	BoardId() BoardId
+	GetTopicIds() []TopicId
 
 	SetSwitch(*Switch)
 }

@@ -1,33 +1,14 @@
 package threads
 
-// TopicID defines type of id of topic.
-type TopicID []byte
+// TopicId defines type of id of topic.
+type TopicId byte
 
-type Topic struct {
-	ID TopicID
-}
-
-// BoardID defines type of id of board.
-type BoardID []byte
-
-type Board struct {
-	ID BoardID
-}
+// BoardId defines type of id of board.
+type BoardId []byte
 
 type Message struct {
 	Sender       *Sender
-	Board        *Board
-	Topic        *Topic
+	BoardId      BoardId
+	TopicId      TopicId
 	PayloadBytes []byte
-}
-
-func NewMessage(
-	sender *Sender, board *Board, topic *Topic, payloadBytes []byte,
-) *Message {
-	return &Message{
-		Sender:       sender,
-		Board:        board,
-		Topic:        topic,
-		PayloadBytes: payloadBytes,
-	}
 }

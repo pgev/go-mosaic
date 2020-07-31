@@ -11,11 +11,9 @@ import (
 type Switch struct {
 	service.BaseService
 
-	reactorsByBoardMsgStream map[string]Reactor
-	reactorsByBoard          map[string][]Reactor
-	reactors                 []Reactor
-
-	sources []Source
+	reactorsByLocus map[string]Reactor
+	reactorsByBoard map[string][]Reactor
+	reactors        []Reactor
 }
 
 func (sw *Switch) OnStart() error {
@@ -25,22 +23,8 @@ func (sw *Switch) OnStart() error {
 		if err != nil {
 			panic(
 				fmt.Sprintf(
-					"Reactor '%v'failed to start: '%v'",
+					"Reactor '%v' failed to start: '%v'",
 					reactor,
-					err,
-				),
-			)
-		}
-	}
-
-	// starts sources
-	for _, source := range sw.sources {
-		err := source.Start()
-		if err != nil {
-			panic(
-				fmt.Sprintf(
-					"Source '%v'failed to start: '%v'",
-					source,
 					err,
 				),
 			)
@@ -55,49 +39,42 @@ func (sw *Switch) OnStop() {
 	for _, reactor := range sw.reactors {
 		reactor.Stop()
 	}
-
-	// stops sources
-	for _, source := range sw.sources {
-		source.Stop()
-	}
 }
 
 // AddReactor adds a reactor to the switch.
 func (sw *Switch) AddReactor(reactor Reactor) {
-	boardID := reactor.Board().ID
+	boardId := reactor.BoardId()
 
-	for _, topic := range reactor.GetTopics() {
-		topicID := topic.ID
-
-		boardMsgStreamHash := hashBoardMsgStream(boardID, topicID)
+	for _, topicId := range reactor.GetTopicIds() {
+		locus := hashLocus(boardId, topicId)
 
 		// No two reactors can share the same topic.
-		if sw.reactorsByBoardMsgStream[boardMsgStreamHash] != nil {
+		if sw.reactorsByLocus[locus] != nil {
 			panic(
 				fmt.Sprintf(
 					"There is already a reactor (%v) registered for the board/topic pair %X/%X",
-					sw.reactorsByBoardMsgStream[boardMsgStreamHash],
-					boardID,
-					topicID,
+					sw.reactorsByLocus[locus],
+					boardId,
+					topicId,
 				),
 			)
 		}
 
-		sw.reactorsByBoardMsgStream[boardMsgStreamHash] = reactor
+		sw.reactorsByLocus[locus] = reactor
 	}
 
-	boardIDHash := hashBoardID(boardID)
-	sw.reactorsByBoard[boardIDHash] = append(sw.reactorsByBoard[boardIDHash], reactor)
+	boardIdHash := hashBoardId(boardId)
+	sw.reactorsByBoard[boardIdHash] = append(sw.reactorsByBoard[boardIdHash], reactor)
 
 	reactor.SetSwitch(sw)
 }
 
-func (sw *Switch) AddSource(source Source) {
+func (sw *Switch) AddSource(source *Source) {
 
-	boardIDHash := hashBoardID(source.Board().ID)
+	boardIDHash := hashBoardId(source.BoardId)
 
 	for _, reactor := range sw.reactorsByBoard[boardIDHash] {
-		err, source := reactor.InitSource(source)
+		err := reactor.InitSource(source)
 		if err != nil {
 			panic(
 				fmt.Sprintf(
@@ -114,25 +91,21 @@ func (sw *Switch) AddSource(source Source) {
 		if err != nil {
 			panic(
 				fmt.Sprintf(
-					"Reactor '%v'failed to add source '%v'",
+					"Reactor '%v' failed to add source '%v'",
 					reactor,
 					source,
 				),
 			)
 		}
 	}
-
-	source.InitReactors(sw.reactorsByBoardMsgStream)
-
-	sw.sources = append(sw.sources, source)
 }
 
-func hashBoardMsgStream(boardID BoardID, topicID TopicID) string {
-	h := sha256.Sum256(append(boardID, topicID...))
+func hashLocus(boardId BoardId, topicId TopicId) string {
+	h := sha256.Sum256(append(boardId, byte(topicId)))
 	return string(h[:])
 }
 
-func hashBoardID(boardID BoardID) string {
-	h := sha256.Sum256(boardID)
+func hashBoardId(boardId BoardId) string {
+	h := sha256.Sum256(boardId)
 	return string(h[:])
 }
