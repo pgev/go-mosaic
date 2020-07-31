@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -9,17 +10,17 @@ import (
 )
 
 func AddNodeFlags(cmd *cobra.Command) {
-	cmd.Flags().String("threads.host", config.Threads.HostAddressString, "Host address")
+	cmd.Flags().StringP("threads.host", "a", config.Threads.HostAddressString, "Host address")
 }
-
 
 func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "node",
 		Short: "Run a mosaic node",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// check config
-			n, err := nodeProvider(config)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			n, err := nodeProvider(ctx, config)
 			if err != nil {
 				return fmt.Errorf("failed to create new node: %w", err)
 			}

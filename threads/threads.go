@@ -2,8 +2,10 @@ package threads
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/fatih/color"
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	"github.com/ipfs/go-datastore"
 	badger "github.com/ipfs/go-ds-badger"
@@ -13,14 +15,17 @@ import (
 	corecm "github.com/libp2p/go-libp2p-core/connmgr"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/peerstore"
 	"github.com/libp2p/go-libp2p-kad-dht/dual"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
+	"github.com/libp2p/go-libp2p/p2p/discovery"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/textileio/go-threads/core/app"
 	"github.com/textileio/go-threads/core/logstore"
 	"github.com/textileio/go-threads/logstore/lstoreds"
 	"github.com/textileio/go-threads/net"
+	txtutil "github.com/textileio/go-threads/util"
 	"google.golang.org/grpc"
 
 	cfg "github.com/mosaicdao/go-mosaic/config"
@@ -28,18 +33,38 @@ import (
 )
 
 var (
+	grey  = color.New(color.FgHiBlack).SprintFunc()
+	green = color.New(color.FgHiGreen).SprintFunc()
+
 	log = logging.Logger("threads")
 )
 
+type notifee struct {
+	t ThreadsNetwork
+}
+
+func (n *notifee) HandlePeerFound(p peer.AddrInfo) {
+	log.Infof("found peer %v, adding to peerstore", p)
+	n.t.Host().Peerstore().AddAddrs(
+		p.ID,
+		p.Addrs,
+		peerstore.ConnectedAddrTTL,
+	)
+}
+
 type ThreadsNetwork interface {
 	service.Service
+
+	Host() host.Host
+	Peerstore() peerstore.Peerstore
 }
 
 // Threads provides a Threads network, and implements Servicable and Service.
 type threads struct {
 	service.BaseService
 
-	cancel context.CancelFunc
+	// cancel dependent goroutines
+	childCancel context.CancelFunc
 
 	api app.Net // provides Connection
 
@@ -51,11 +76,17 @@ type threads struct {
 	peerstore     peerstore.Peerstore
 	litedatastore datastore.Datastore
 	logdatastore  datastore.Datastore
+
+	mdns discovery.Service
 }
+
+var _ (ThreadsNetwork) = (*threads)(nil)
 
 // NewThreadsNetwork provides a ThreadsNetwork interface to a new instance.
 // The ThreadsNetwork must be started by calling Start() before use.
-func NewThreadsNetwork(privateNetworkKey crypto.PrivKey,
+func NewThreadsNetwork(
+	ctx context.Context,
+	privateNetworkKey crypto.PrivKey,
 	config *cfg.ThreadsConfig) (ThreadsNetwork, error) {
 	// TODO: take config for OnStart to work
 
@@ -65,52 +96,52 @@ func NewThreadsNetwork(privateNetworkKey crypto.PrivKey,
 		config.ConnectionsGracePeriod,
 	)
 
-	hostAddress, err :=  config.HostAddress()
+	hostAddress, err := config.HostAddress()
 	if err != nil {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	childCtx, childCancel := context.WithCancel(ctx)
 
 	// create IPFS Lite Peer
 	litedatastore, peerstore, peer, host, dht, err := createIpfsLitePeer(
-		ctx,
+		childCtx,
 		config.IpfsLitePath(),
 		privateNetworkKey,
 		[]ma.Multiaddr{hostAddress},
 		connManager,
 	)
 	if err != nil {
-		cancel()
+		childCancel()
 		return nil, err
 	}
 
 	// build a log store
 	logdatastore, logstore, err := createLogStore(
-		ctx,
+		childCtx,
 		config.LogStorePath(),
 	)
 	if err != nil {
-		cancel()
+		childCancel()
 		litedatastore.Close()
 		return nil, err
 	}
 
 	api, err := createNetworkAPI(
-		ctx, host, peer, logstore,
+		childCtx, host, peer, logstore,
 		&net.Config{
 			Debug: true,
 		},
 	)
 	if err != nil {
-		cancel()
+		childCancel()
 		litedatastore.Close()
 		logdatastore.Close()
 		return nil, err
 	}
 
 	t := &threads{
-		cancel:        cancel,
+		childCancel:   childCancel,
 		api:           api,
 		hostAddress:   hostAddress,
 		peer:          peer,
@@ -120,29 +151,71 @@ func NewThreadsNetwork(privateNetworkKey crypto.PrivKey,
 		litedatastore: litedatastore,
 		logdatastore:  logdatastore,
 	}
+	t.BaseService = *service.NewBaseService("ThreadsNetwork", t)
+
+	go t.autoclose(ctx)
+
 	return t, nil
 }
 
 func (t *threads) OnStart() error {
-	// TODO: start ipfslite, logstore etc
 
-	// subscribe to network: in a go routine
+	// bootstrap peers; for bigfish project, piggyback on the threadsDB
+	// and IPFS public bootstrap peers
+	// TODO: refine where to bootstrap from depending on known Column members
+	t.peer.Bootstrap(txtutil.DefaultBoostrapPeers())
+
+	// Build a MDNS service
+	ctx := context.Background()
+	mdns, err := discovery.NewMdnsService(ctx, t.api.Host(), time.Second, "")
+	if err != nil {
+		log.Warnf("fatal error creating MDNS service: %w", err)
+		return err
+	}
+	notifee := &notifee{
+		t: t,
+	}
+	mdns.RegisterNotifee(notifee)
+	t.mdns = mdns
+	// Start the prompt
+	fmt.Println(grey("Welcome to MOSAIC!"))
+	fmt.Println(grey("Your peer ID is ") + green(t.Host().ID().String()))
+	fmt.Printf("Listening on addresses: %v", t.Host().Addrs())
+
+	// subscribe to threads without any filter options
+	sub, err := t.api.Subscribe(ctx)
+	if err != nil {
+		log.Errorf("failed to subscribe to threads network: %w", err)
+	}
+
+	go func() {
+		for rec := range sub {
+			fmt.Printf("got new record: %v", rec)
+		}
+	}()
+
 	// place to handle subscription updates (later)
 	// incoming records of (new) logIds, parse messages and passed to switch
 	return nil
 }
 
 func (t *threads) OnStop() {
-	// close stuff
+	// close all depending goroutines
+	t.close()
+}
 
+func (t *threads) Host() host.Host {
+	return t.host
+}
+
+func (t *threads) Peerstore() peerstore.Peerstore {
+	return t.peerstore
 }
 
 //------------------------------------------------------------------------------
 // Private functions
 
-func setupConnectionManager(low, high int,grace time.Duration) (
-	corecm.ConnManager,
-) {
+func setupConnectionManager(low, high int, grace time.Duration) corecm.ConnManager {
 	return cm.NewConnManager(low, high, grace)
 }
 
@@ -167,7 +240,7 @@ func createIpfsLitePeer(
 	}
 	// create peerstore
 	peerstore, err := pstoreds.NewPeerstore(ctx, litedatastore,
-		 pstoreds.DefaultOpts())
+		pstoreds.DefaultOpts())
 	if err != nil {
 		litedatastore.Close()
 		return nil, nil, nil, nil, nil, err
@@ -219,11 +292,11 @@ func createLogStore(
 }
 
 func createNetworkAPI(
-	ctx         context.Context,
-	host        host.Host,
-	peer        *ipfslite.Peer,
-	logstore    logstore.Logstore,
-	netConfig   *net.Config,
+	ctx context.Context,
+	host host.Host,
+	peer *ipfslite.Peer,
+	logstore logstore.Logstore,
+	netConfig *net.Config,
 	grpcOptions ...grpc.ServerOption,
 ) (
 	app.Net,
@@ -236,10 +309,43 @@ func createNetworkAPI(
 		peer,
 		logstore,
 		*netConfig,
-		grpcOptions...
+		grpcOptions...,
 	)
 	if err != nil {
 		return nil, err
 	}
 	return api, nil
+}
+
+func (t *threads) autoclose(ctx context.Context) {
+	<-ctx.Done()
+	log.Info("threads network autoclosing")
+	t.close()
+}
+
+func (t *threads) close() {
+	// close datastores and dependencies
+	if err := t.api.Close(); err != nil {
+		log.Warnf("error closing threads network API: %w", err)
+	}
+	// IPFSLite t.peer is autoclosed by cancel()
+	t.childCancel()
+	if err := t.dht.Close(); err != nil {
+		log.Warnf("error closing DHT: %w", err)
+	}
+	if err := t.host.Close(); err != nil {
+		log.Warnf("errror closing host: %w", err)
+	}
+	if err := t.peerstore.Close(); err != nil {
+		log.Warnf("error closing peerstore: %w", err)
+	}
+	if err := t.litedatastore.Close(); err != nil {
+		log.Warnf("error closing litedatastore: %w", err)
+	}
+	if err := t.logdatastore.Close(); err != nil {
+		log.Warnf("error closing logdatastore: %w", err)
+	}
+	if err := t.mdns.Close(); err != nil {
+		log.Warnf("error closing mdns: %w", err)
+	}
 }
