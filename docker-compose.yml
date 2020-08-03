@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  member0:
+    container_name: member0
+    image: "mosaic:0.1.0"
+    ports:
+      - "4002:4001"
+      - "4007:4006"
+    environment:
+      - ID=0
+    networks:
+      localnet:
+        ipv4_address: 192.167.10.2
+
+  member1:
+    container_name: member1
+    image: "mosaic:0.1.0"
+    ports:
+      - "4003:4001"
+      - "4008:4006"
+    environment:
+      - ID=1
+    networks:
+      localnet:
+        ipv4_address: 192.167.10.3
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 192.167.10.0/16
