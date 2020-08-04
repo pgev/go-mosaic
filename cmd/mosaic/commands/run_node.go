@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -20,20 +21,28 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			n, err := nodeProvider(ctx, config)
+			node, _, err := nodeProvider(ctx, config)
 			if err != nil {
 				return fmt.Errorf("failed to create new node: %w", err)
 			}
 
-			if err := n.Start(); err != nil {
+			if err := node.Start(); err != nil {
 				return fmt.Errorf("failed to start node: %w", err)
 			}
 
 			log.Info("Started node")
 
 			// TODO: catch SIGTERM interrupt
+			go func() {
+				for {
+					time.Sleep(5 * time.Second)
+					fmt.Printf("connected peers (%v)\n",
+						node.Threads().Host().Network().Peers(),
+					)
+				}
+			}()
 
-			n.Wait()
+			node.Wait()
 			return nil
 		},
 	}

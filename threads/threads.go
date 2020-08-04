@@ -15,17 +15,16 @@ import (
 	corecm "github.com/libp2p/go-libp2p-core/connmgr"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/peer"
+	p2ppeer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/peerstore"
 	"github.com/libp2p/go-libp2p-kad-dht/dual"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	"github.com/libp2p/go-libp2p/p2p/discovery"
-	ma "github.com/multiformats/go-multiaddr"
+	mfma "github.com/multiformats/go-multiaddr"
 	"github.com/textileio/go-threads/core/app"
 	"github.com/textileio/go-threads/core/logstore"
 	"github.com/textileio/go-threads/logstore/lstoreds"
 	"github.com/textileio/go-threads/net"
-	txtutil "github.com/textileio/go-threads/util"
 	"google.golang.org/grpc"
 
 	cfg "github.com/mosaicdao/go-mosaic/config"
@@ -43,7 +42,7 @@ type notifee struct {
 	t ThreadsNetwork
 }
 
-func (n *notifee) HandlePeerFound(p peer.AddrInfo) {
+func (n *notifee) HandlePeerFound(p p2ppeer.AddrInfo) {
 	log.Infof("found peer %v, adding to peerstore", p)
 	n.t.Host().Peerstore().AddAddrs(
 		p.ID,
@@ -68,14 +67,14 @@ type threads struct {
 
 	api app.Net // provides Connection
 
-	config        *cfg.ThreadsConfig
-	hostAddress   ma.Multiaddr
-	peer          *ipfslite.Peer
-	host          host.Host
-	dht           *dual.DHT
-	peerstore     peerstore.Peerstore
-	litedatastore datastore.Datastore
-	logdatastore  datastore.Datastore
+	hostAddress    mfma.Multiaddr
+	bootstrapPeers []p2ppeer.AddrInfo
+	peer           *ipfslite.Peer
+	host           host.Host
+	dht            *dual.DHT
+	peerstore      peerstore.Peerstore
+	litedatastore  datastore.Datastore
+	logdatastore   datastore.Datastore
 
 	mdns discovery.Service
 }
@@ -87,6 +86,7 @@ var _ (ThreadsNetwork) = (*threads)(nil)
 func NewThreadsNetwork(
 	ctx context.Context,
 	privateNetworkKey crypto.PrivKey,
+	bootstrapPeers []p2ppeer.AddrInfo,
 	config *cfg.ThreadsConfig) (ThreadsNetwork, error) {
 	// TODO: take config for OnStart to work
 
@@ -108,7 +108,7 @@ func NewThreadsNetwork(
 		childCtx,
 		config.IpfsLitePath(),
 		privateNetworkKey,
-		[]ma.Multiaddr{hostAddress},
+		[]mfma.Multiaddr{hostAddress},
 		connManager,
 	)
 	if err != nil {
@@ -141,15 +141,16 @@ func NewThreadsNetwork(
 	}
 
 	t := &threads{
-		childCancel:   childCancel,
-		api:           api,
-		hostAddress:   hostAddress,
-		peer:          peer,
-		host:          host,
-		dht:           dht,
-		peerstore:     peerstore,
-		litedatastore: litedatastore,
-		logdatastore:  logdatastore,
+		childCancel:    childCancel,
+		api:            api,
+		hostAddress:    hostAddress,
+		bootstrapPeers: bootstrapPeers,
+		peer:           peer,
+		host:           host,
+		dht:            dht,
+		peerstore:      peerstore,
+		litedatastore:  litedatastore,
+		logdatastore:   logdatastore,
 	}
 	t.BaseService = *service.NewBaseService("ThreadsNetwork", t)
 
@@ -163,7 +164,7 @@ func (t *threads) OnStart() error {
 	// bootstrap peers; for bigfish project, piggyback on the threadsDB
 	// and IPFS public bootstrap peers
 	// TODO: refine where to bootstrap from depending on known Column members
-	t.peer.Bootstrap(txtutil.DefaultBoostrapPeers())
+	t.peer.Bootstrap(t.bootstrapPeers)
 
 	// Build a MDNS service
 	ctx := context.Background()
@@ -180,7 +181,7 @@ func (t *threads) OnStart() error {
 	// Start the prompt
 	fmt.Println(grey("Welcome to MOSAIC!"))
 	fmt.Println(grey("Your peer ID is ") + green(t.Host().ID().String()))
-	fmt.Printf("Listening on addresses: %v", t.Host().Addrs())
+	fmt.Printf("Listening on addresses: %v\n", t.Host().Addrs())
 
 	// subscribe to threads without any filter options
 	sub, err := t.api.Subscribe(ctx)
@@ -223,7 +224,7 @@ func createIpfsLitePeer(
 	ctx context.Context,
 	ipfsLitePath string,
 	privateNetworkKey crypto.PrivKey,
-	listenAddresses []ma.Multiaddr,
+	listenAddresses []mfma.Multiaddr,
 	connectionManager corecm.ConnManager,
 ) (
 	datastore.Datastore,

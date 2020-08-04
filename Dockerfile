@@ -46,7 +46,7 @@ COPY --from=0 /etc/ssl/certs /etc/ssl/certs
 # This shared lib (part of glibc) doesn't seem to be included with busybox.
 COPY --from=0 /lib/x86_64-linux-gnu/libdl.so.2 /lib/libdl.so.2
 
-# swarm TCP
+# swarm TCP for IPFS/Libp2p
 EXPOSE 4001
 
 # hostAddr; should be exposed to the public

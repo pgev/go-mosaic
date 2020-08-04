@@ -1,6 +1,6 @@
 package threads
 
 type Source struct {
-	BoardId BoardId
+	BoardID BoardID
 	Sender  *Sender
 }

@@ -1,6 +1,12 @@
 version: '3'
 
 services:
+#   ipfsnode:
+#     container_name: ipfsnode
+#     image: "ipfs/go-ipfs:latest"
+#     networks:
+#       localnet:
+#         ipv4_address: 192.167.10.4
   member0:
     container_name: member0
     image: "mosaic:0.1.0"
@@ -8,7 +14,8 @@ services:
       - "4002:4001"
       - "4007:4006"
     environment:
-      - ID=0
+      - MOSAIC_CC_ID=0
+      - GOLOG_LOG_LEVEL=error
     networks:
       localnet:
         ipv4_address: 192.167.10.2
@@ -20,7 +27,7 @@ services:
       - "4003:4001"
       - "4008:4006"
     environment:
-      - ID=1
+      - MOSAIC_CC_ID=1
     networks:
       localnet:
         ipv4_address: 192.167.10.3

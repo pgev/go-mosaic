@@ -2,11 +2,14 @@ package node
 
 import (
 	"context"
+
 	logging "github.com/ipfs/go-log"
+	p2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
+	p2ppeer "github.com/libp2p/go-libp2p-core/peer"
 
 	cfg "github.com/mosaicdao/go-mosaic/config"
 	"github.com/mosaicdao/go-mosaic/libs/service"
-	sgn "github.com/mosaicdao/go-mosaic/signer"
+	"github.com/mosaicdao/go-mosaic/threads"
 	thr "github.com/mosaicdao/go-mosaic/threads"
 )
 
@@ -24,23 +27,36 @@ type Node struct {
 
 	// for bigfish, don't yet create a keystore, rather just keep the explicit
 	// keys in the node. TODO: improve key management
-	networkKey *sgn.FileNetworkSigner
+	networkKey p2pcrypto.PrivKey
 
 	threads thr.ThreadsNetwork
 }
 
+type NetworkPrivateKeyProvider func(config *cfg.Config) (p2pcrypto.PrivKey, error)
+
+type BootstrapListProvider func() []p2ppeer.AddrInfo
+
 // NewNode creates a new node based on the configuration provided
-func NewNode(ctx context.Context, config *cfg.Config) (*Node, error) {
+func NewNode(ctx context.Context,
+	networkPrivateKeyProvider NetworkPrivateKeyProvider,
+	bootstrapListProvider BootstrapListProvider,
+	config *cfg.Config) (*Node, error) {
 	childCtx, childCancel := context.WithCancel(ctx)
 
-	// Generate new random key for libp2p; TODO: load key from disk
-	netKey, err := sgn.GenerateFileNetworkSigner(config.NodePrivateKeyFile())
+	netKey, err := networkPrivateKeyProvider(config)
 	if err != nil {
+		// child context is not yet used, but for clarity clean it up
+		childCancel()
 		return nil, err
 	}
 
-	threads, err := thr.NewThreadsNetwork(childCtx, netKey, config.Threads)
+	threads, err := thr.NewThreadsNetwork(
+		childCtx, netKey, bootstrapListProvider(), config.Threads,
+	)
 	if err != nil {
+		// threads creation failed, so it has cleaned up,
+		// but for clarity clean it up
+		childCancel()
 		return nil, err
 	}
 
@@ -68,6 +84,10 @@ func (n *Node) OnStart() error {
 
 func (n *Node) OnStop() {
 	n.close()
+}
+
+func (n *Node) Threads() threads.ThreadsNetwork {
+	return n.threads
 }
 
 //------------------------------------------------------------------------------

@@ -12,8 +12,8 @@ type Reactor interface {
 
 	ReceiveMsg(msg *Message)
 
-	BoardId() BoardId
-	GetTopicIds() []TopicId
+	BoardID() BoardID
+	GetTopicIDs() []TopicID
 
 	SetSwitch(*Switch)
 }

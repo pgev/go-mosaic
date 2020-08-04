@@ -7,16 +7,16 @@ import (
 type BaseReactor struct {
 	service.BaseService
 
-	boardId BoardId
+	boardID BoardID
 	Switch  *Switch
 }
 
 func NewBaseReactor(
-	name string, impl service.Servicable, boardId BoardId,
+	name string, impl service.Servicable, boardID BoardID,
 ) *BaseReactor {
 	return &BaseReactor{
 		BaseService: *service.NewBaseService(name, impl),
-		boardId:     boardId,
+		boardID:     boardID,
 		Switch:      nil,
 	}
 }
@@ -26,7 +26,7 @@ func (*BaseReactor) AddSource(*Source) error  { return nil }
 
 func (*BaseReactor) ReceiveMsg(*Message) {}
 
-func (self *BaseReactor) Board() BoardId  { return self.boardId }
-func (*BaseReactor) GetTopics() []TopicId { return nil }
+func (self *BaseReactor) Board() BoardID  { return self.boardID }
+func (*BaseReactor) GetTopics() []TopicID { return nil }
 
 func (self *BaseReactor) SetSwitch(sw *Switch) { self.Switch = sw }

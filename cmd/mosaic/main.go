@@ -23,7 +23,8 @@ var (
 func main() {
 	rootCmd := cmd.RootCmd
 
-	nodeProvider := node.DefaultNewNode
+	// nodeProvider := node.DefaultNewNode
+	nodeProvider := node.CutCornersNewNode
 
 	rootCmd.AddCommand(cmd.NewRunNodeCmd(nodeProvider))
 

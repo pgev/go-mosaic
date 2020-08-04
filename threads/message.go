@@ -1,14 +1,14 @@
 package threads
 
-// TopicId defines type of id of topic.
-type TopicId byte
+// TopicID defines type of id of topic.
+type TopicID byte
 
-// BoardId defines type of id of board.
-type BoardId []byte
+// BoardID defines type of id of board.
+type BoardID []byte
 
 type Message struct {
 	Sender       *Sender
-	BoardId      BoardId
-	TopicId      TopicId
+	BoardID      BoardID
+	TopicID      TopicID
 	PayloadBytes []byte
 }
