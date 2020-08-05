@@ -7,14 +7,17 @@ import (
 	p2ppeer "github.com/libp2p/go-libp2p-core/peer"
 	mfma "github.com/multiformats/go-multiaddr"
 	txtthread "github.com/textileio/go-threads/core/thread"
-	txtutil "github.com/textileio/go-threads/util"
 
+
+	"github.com/mosaicdao/go-mosaic/libs/service"
 	"github.com/mosaicdao/go-mosaic/threads"
 )
 
 // CutCornersLandscape is a temporary struct to have a hard-coded, shared threadsId
 // and service and read key for the shared logs
 type CutCornersLandscape struct {
+	service.BaseService
+
 	ThreadsID txtthread.ID
 	Key       txtthread.Key
 }
@@ -93,10 +96,12 @@ func CreateCutCornersLandscape() *CutCornersLandscape {
 	if err != nil {
 		panic(err)
 	}
-	return &CutCornersLandscape{
+	ccl := &CutCornersLandscape{
 		ThreadsID: id,
 		Key:       k,
 	}
+	ccl.BaseService = *service.NewBaseService("CutCorner Landscape", ccl)
+	return ccl
 }
 
 // GetPrivateKey returns a hardcoded private key, cutting corners 👻
@@ -114,14 +119,20 @@ func (*CutCornersLandscape) GetBootstrapPeers() []p2ppeer.AddrInfo {
 	if len(memberAddrInfos) == 0 {
 		log.Panicf("no bootstrap peers in cut corner landscape (%v)", memberAddrInfos)
 	}
-	allpeers := append(txtutil.DefaultBoostrapPeers(), memberAddrInfos...)
-	return allpeers
+	// allpeers := append(txtutil.DefaultBoostrapPeers(), memberAddrInfos...)
+	return memberAddrInfos
 }
 
 // Peers provides a set of hardcoded address info, cutting corners
 func (*CutCornersLandscape) Peers(threads.BoardID) []p2ppeer.AddrInfo {
 	return memberAddrInfos
 }
+
+func (*CutCornersLandscape) OnStart() error {
+	return nil
+}
+
+func (*CutCornersLandscape) OnStop() {}
 
 //------------------------------------------------------------------------------
 // Private functions

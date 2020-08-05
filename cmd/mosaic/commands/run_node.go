@@ -27,6 +27,11 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 				return fmt.Errorf("failed to create new node: %w", err)
 			}
 
+			if err := landscape.Start(); err != nil {
+				return fmt.Errorf("failed to start landscape: %w", err)
+			}
+			log.Info("Started landscape")
+
 			if err := node.Start(); err != nil {
 				return fmt.Errorf("failed to start node: %w", err)
 			}
