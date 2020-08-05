@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	p2ppeerstore "github.com/libp2p/go-libp2p-core/peerstore"
 
 	"github.com/mosaicdao/go-mosaic/node"
 )
@@ -21,7 +22,7 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			node, _, err := nodeProvider(ctx, config)
+			node, landscape, err := nodeProvider(ctx, config)
 			if err != nil {
 				return fmt.Errorf("failed to create new node: %w", err)
 			}
@@ -29,7 +30,6 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 			if err := node.Start(); err != nil {
 				return fmt.Errorf("failed to start node: %w", err)
 			}
-
 			log.Info("Started node")
 
 			// TODO: catch SIGTERM interrupt
@@ -42,6 +42,22 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 				}
 			}()
 
+			go func() {
+				for {
+					time.Sleep(2 * time.Second)
+					members := landscape.Peers(nil)
+					for _, member := range members {
+						if member.ID != node.Threads().Host().ID() {
+							fmt.Printf("Adding peer %s\n", member.ID.String())
+							node.Threads().Host().Peerstore().AddAddrs(
+								member.ID,
+								member.Addrs,
+								p2ppeerstore.PermanentAddrTTL,
+							)
+						}
+					}
+				}
+			}()
 			node.Wait()
 			return nil
 		},

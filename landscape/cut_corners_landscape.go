@@ -26,15 +26,15 @@ var (
 	memberPrivateKeyStrings = []string{
 		"e4b404b19b59749a92141d1f1ef22509ac01480148923a1f7c9f65e68e80b85f97ea5ddec354513941796d00085c66daa866da65aa2a548a5fa2f0b7388823a4",
 		"2c56a4518f3aa4add8f83d149a23a75a398018b59c3d01084626d83753189d2bdee10a66d305bb4d33d78dbb14a882b44ebe0ffd647d696c53c3181e7d20f4ca",
-		"42d18b2ac8a1a60a9bccb2995233ae3c46e15a595343ad445bd9165458c38cc86e846ac9b8dddd4831b79552b62d006246052238f7fb9e6ea8ea4a5d73767503",
-		"56e379081af7c1fb0820e78d45850d665f971c2e2bfc3df836ed8f074b9c4ad9fc155f8941bfa50e5d10f31e1d0212e9d952c09f505d25df6dcbaddca74c409b",
+		// "42d18b2ac8a1a60a9bccb2995233ae3c46e15a595343ad445bd9165458c38cc86e846ac9b8dddd4831b79552b62d006246052238f7fb9e6ea8ea4a5d73767503",
+		// "56e379081af7c1fb0820e78d45850d665f971c2e2bfc3df836ed8f074b9c4ad9fc155f8941bfa50e5d10f31e1d0212e9d952c09f505d25df6dcbaddca74c409b",
 	}
 
 	memberLocalIPAddrs = []string{
-		"/ip4/192.167.10.2/tcp/4002",
-		"/ip4/192.167.10.3/tcp/4003",
-		"/ip4/192.167.10.4/tcp/4004",
-		"/ip4/192.167.10.5/tcp/4005",
+		"/ip4/0.0.0.0/tcp/4007",
+		"/ip4/0.0.0.0/tcp/4008",
+		// "/ip4/0.0.0.0/tcp/4009",
+		// "/ip4/0.0.0.0/tcp/4010",
 	}
 
 	memberPublicKeys = []p2pcrypto.PubKey{}
@@ -110,6 +110,10 @@ func (*CutCornersLandscape) GetPrivateKey(index int) p2pcrypto.PrivKey {
 // GetBootstrapPeers returns the hardcoded member address info to use
 // as bootstrap peers, because cutting corners 👻
 func (*CutCornersLandscape) GetBootstrapPeers() []p2ppeer.AddrInfo {
+	if len(memberAddrInfos) == 0 {
+		log.Panicf("no bootstrap peers in cut corner landscape (%v)", memberAddrInfos)
+	}
+	// allpeers := append(txtutil.DefaultBoostrapPeers(), memberAddrInfos...)
 	return memberAddrInfos
 }
 
