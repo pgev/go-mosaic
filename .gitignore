@@ -1,5 +1,6 @@
 # compiled executables
 go-mosaic
+mosaic
 main
 
 # Test binary, built with `go test -c`
