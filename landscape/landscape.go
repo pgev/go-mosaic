@@ -19,12 +19,13 @@ var (
 // Specifically Peers are assigned to Boards on the contract
 type Landscape interface {
 	service.Service
-	Peers(board threads.BoardID) []p2ppeer.AddrInfo
+	GetSources(threads.BoardID) []p2ppeer.ID
+	GetPeers(threads.BoardID) []p2ppeer.AddrInfo
 	// Subscription to source changes of (one, or more or all) board(s)
 	SubscribeSourceChange(ctx context.Context,
-		options ...SubscriptionOption) (<-chan SourceChange, error)
+		options ...SubscriptionOption) (<-chan *SourceChange, error)
 	SubscribeLogAppend(ctx context.Context,
-		options ...SubscriptionOption) (<-chan BoardLog, error)
+		options ...SubscriptionOption) (<-chan *BoardLog, error)
 }
 
 type defaultLandscape struct {
@@ -42,8 +43,13 @@ func NewDefaultLandscape() Landscape {
 	return dl
 }
 
-func (*defaultLandscape) Peers(threads.BoardID) []p2ppeer.AddrInfo {
-	log.Panicf("Peers() not implemented for default landscape")
+func (*defaultLandscape) GetPeers(threads.BoardID) []p2ppeer.AddrInfo {
+	log.Panicf("GetPeers not implemented for default landscape")
+	return nil
+}
+
+func (*defaultLandscape) GetSources(threads.BoardID) []p2ppeer.ID {
+	log.Panicf("GetSources not implemented for default landscape")
 	return nil
 }
 
@@ -52,3 +58,23 @@ func (*defaultLandscape) OnStart() error {
 }
 
 func (*defaultLandscape) OnStop() {}
+
+func (*defaultLandscape) SubscribeSourceChange(
+	ctx context.Context,
+	options ...SubscriptionOption,
+) (
+	<-chan *SourceChange, error,
+) {
+	log.Panic("not implemented")
+	return nil, nil
+}
+
+func (d *defaultLandscape) SubscribeLogAppend(
+	ctx context.Context,
+	options ...SubscriptionOption,
+) (
+	<-chan *BoardLog, error,
+) {
+	log.Panic("not implemented")
+	return nil, nil
+}

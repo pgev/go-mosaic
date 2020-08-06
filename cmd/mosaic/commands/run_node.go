@@ -50,7 +50,7 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 			go func() {
 				for {
 					time.Sleep(2 * time.Second)
-					members := landscape.Peers(nil)
+					members := landscape.GetPeers("")
 					for _, member := range members {
 						if member.ID != node.Threads().Host().ID() {
 							fmt.Printf("Adding peer %s\n", member.ID.String())

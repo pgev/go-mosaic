@@ -1,7 +1,6 @@
 package threads
 
 import (
-	"crypto/sha256"
 	"fmt"
 
 	"github.com/mosaicdao/go-mosaic/libs/service"
@@ -12,7 +11,7 @@ type Switch struct {
 	service.BaseService
 
 	reactorsByLocus map[string]Reactor
-	reactorsByBoard map[string][]Reactor
+	reactorsByBoard map[BoardID][]Reactor
 	reactors        []Reactor
 }
 
@@ -63,17 +62,14 @@ func (sw *Switch) AddReactor(reactor Reactor) {
 		sw.reactorsByLocus[locus] = reactor
 	}
 
-	boardIDHash := hashBoardID(boardID)
-	sw.reactorsByBoard[boardIDHash] = append(sw.reactorsByBoard[boardIDHash], reactor)
+	sw.reactorsByBoard[boardID] = append(sw.reactorsByBoard[boardID], reactor)
 
 	reactor.SetSwitch(sw)
 }
 
 func (sw *Switch) AddSource(source *Source) {
 
-	boardIDHash := hashBoardID(source.BoardID)
-
-	for _, reactor := range sw.reactorsByBoard[boardIDHash] {
+	for _, reactor := range sw.reactorsByBoard[source.BoardID] {
 		err := reactor.InitSource(source)
 		if err != nil {
 			panic(
@@ -86,7 +82,7 @@ func (sw *Switch) AddSource(source *Source) {
 		}
 	}
 
-	for _, reactor := range sw.reactorsByBoard[boardIDHash] {
+	for _, reactor := range sw.reactorsByBoard[source.BoardID] {
 		err := reactor.AddSource(source)
 		if err != nil {
 			panic(
@@ -101,11 +97,5 @@ func (sw *Switch) AddSource(source *Source) {
 }
 
 func hashLocus(boardID BoardID, topicID TopicID) string {
-	h := sha256.Sum256(append(boardID, byte(topicID)))
-	return string(h[:])
-}
-
-func hashBoardID(boardID BoardID) string {
-	h := sha256.Sum256(boardID)
-	return string(h[:])
+	return string(boardID) + "/" + string(topicID)
 }

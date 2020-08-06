@@ -1,13 +1,14 @@
 package landscape
 
 import (
+	"context"
 	"encoding/hex"
 
 	p2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 	p2ppeer "github.com/libp2p/go-libp2p-core/peer"
 	mfma "github.com/multiformats/go-multiaddr"
+	txtbroadcast "github.com/textileio/go-threads/broadcast"
 	txtthread "github.com/textileio/go-threads/core/thread"
-
 
 	"github.com/mosaicdao/go-mosaic/libs/service"
 	"github.com/mosaicdao/go-mosaic/threads"
@@ -20,6 +21,7 @@ type CutCornersLandscape struct {
 
 	ThreadsID txtthread.ID
 	Key       txtthread.Key
+	bus       *txtbroadcast.Broadcaster
 }
 
 var (
@@ -99,6 +101,7 @@ func CreateCutCornersLandscape() *CutCornersLandscape {
 	ccl := &CutCornersLandscape{
 		ThreadsID: id,
 		Key:       k,
+		bus:       txtbroadcast.NewBroadcaster(0),
 	}
 	ccl.BaseService = *service.NewBaseService("CutCorner Landscape", ccl)
 	return ccl
@@ -123,19 +126,88 @@ func (*CutCornersLandscape) GetBootstrapPeers() []p2ppeer.AddrInfo {
 	return memberAddrInfos
 }
 
-// Peers provides a set of hardcoded address info, cutting corners
-func (*CutCornersLandscape) Peers(threads.BoardID) []p2ppeer.AddrInfo {
-	return memberAddrInfos
-}
-
 func (*CutCornersLandscape) OnStart() error {
 	return nil
 }
 
 func (*CutCornersLandscape) OnStop() {}
 
+// GetSources provides an array of LogID/PeerId for sources present on the board.
+func (landscape *CutCornersLandscape) GetSources(threads.BoardID) []p2ppeer.ID {
+	return memberPeerIDs
+}
+
+// GetAddrInfo returns an array of peers and their address info, who are likely
+// to hold the logs of the given board, based on the contract look up table
+func (landscape *CutCornersLandscape) GetPeers(threads.BoardID) []p2ppeer.AddrInfo {
+	return memberAddrInfos
+}
+
+func (landscape *CutCornersLandscape) SubscribeSourceChange(
+	ctx context.Context,
+	options ...SubscriptionOption,
+) (
+	<-chan *SourceChange, error,
+) {
+	subFilter := &SubscriptionFilter{}
+	for _, opt := range options {
+		opt(subFilter)
+	}
+
+	filter := make(map[threads.BoardID]struct{})
+	for _, id := range subFilter.boardIDs {
+		// TODO: assert board is valid and within our domain
+		filter[id] = struct{}{}
+	}
+	return landscape.subscribeSourceChange(ctx, filter)
+}
+
+func (*CutCornersLandscape) SubscribeLogAppend(
+	ctx context.Context,
+	options ...SubscriptionOption,
+) (
+	<-chan *BoardLog, error,
+) {
+	log.Panic("not implemented")
+	return nil, nil
+}
+
 //------------------------------------------------------------------------------
 // Private functions
+
+func (landscape *CutCornersLandscape) subscribeSourceChange(
+	ctx context.Context,
+	filter map[threads.BoardID]struct{},
+) (
+	<-chan *SourceChange, error,
+) {
+	channel := make(chan *SourceChange)
+	go func() {
+		defer close(channel)
+		listener := landscape.bus.Listen()
+		defer listener.Discard()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event, ok := <-listener.Channel():
+				if !ok {
+					return
+				}
+				if sourceChange, ok := event.(*SourceChange); ok {
+					if len(filter) > 0 {
+						if _, ok := filter[sourceChange.BoardID]; ok {
+							channel <- sourceChange
+						}
+					} else {
+						channel <- sourceChange
+					}
+				}
+			}
+		}
+	}()
+	return channel, nil
+}
 
 func unmarshalPrivateKey(k string) p2pcrypto.PrivKey {
 	b, err := hex.DecodeString(k)
