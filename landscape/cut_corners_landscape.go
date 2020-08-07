@@ -25,9 +25,10 @@ type CutCornersLandscape struct {
 }
 
 var (
-	threadID = "bafkw3ulx7jrkuflaent7rrqkw7jaf4pdxhllvz4c32yn3mbusuw3pyi"
+	boardIDStr  = "boardIDForCutCornersLandscape"
+	threadIDStr = "bafkw3ulx7jrkuflaent7rrqkw7jaf4pdxhllvz4c32yn3mbusuw3pyi"
 
-	threadKeys = "batgpncb7nve5skmo2y24nsccvoyh3ihkdazmkjbzm6zk7vwr7ykuhee3os5zyp6buihwv33fb2pwonjr4rddnrt4csle6ojgnfbhqya"
+	threadKeysStr = "batgpncb7nve5skmo2y24nsccvoyh3ihkdazmkjbzm6zk7vwr7ykuhee3os5zyp6buihwv33fb2pwonjr4rddnrt4csle6ojgnfbhqya"
 
 	memberPrivateKeyStrings = []string{
 		"e4b404b19b59749a92141d1f1ef22509ac01480148923a1f7c9f65e68e80b85f97ea5ddec354513941796d00085c66daa866da65aa2a548a5fa2f0b7388823a4",
@@ -85,7 +86,7 @@ func init() {
 // is in place
 func CreateCutCornersLandscape() *CutCornersLandscape {
 	// set a hardcoded threadID (just a random number)
-	id, err := txtthread.Decode(threadID)
+	id, err := txtthread.Decode(threadIDStr)
 	if err != nil {
 		// this is just for crude scaffolding while building code
 		panic(err)
@@ -94,7 +95,7 @@ func CreateCutCornersLandscape() *CutCornersLandscape {
 	// set a hardcoded service and read key, again just for bootstrapping
 	// the codebase and making it easy to assert the lower parts of
 	// the stack are wired together sensibly
-	k, err := txtthread.KeyFromString(threadKeys)
+	k, err := txtthread.KeyFromString(threadKeysStr)
 	if err != nil {
 		panic(err)
 	}
@@ -132,6 +133,12 @@ func (*CutCornersLandscape) OnStart() error {
 
 func (*CutCornersLandscape) OnStop() {}
 
+// GetAssignments returns the boards the given peer is assigned to
+func (*CutCornersLandscape) GetAssignments(peerID p2ppeer.ID) ([]threads.BoardID, error) {
+	b := []threads.BoardID{threads.BoardID(boardIDStr)}
+	return b, nil
+}
+
 // GetSources provides an array of LogID/PeerId for sources present on the board.
 func (landscape *CutCornersLandscape) GetSources(threads.BoardID) []p2ppeer.ID {
 	return memberPeerIDs
@@ -143,12 +150,11 @@ func (landscape *CutCornersLandscape) GetPeers(threads.BoardID) []p2ppeer.AddrIn
 	return memberAddrInfos
 }
 
-func (landscape *CutCornersLandscape) SubscribeSourceChange(
+// Subscribe returns a channel of landscape events, filtered by subscription options
+func (landscape *CutCornersLandscape) Subscribe(
 	ctx context.Context,
 	options ...SubscriptionOption,
-) (
-	<-chan *SourceChange, error,
-) {
+) <-chan LandscapeEvent {
 	subFilter := &SubscriptionFilter{}
 	for _, opt := range options {
 		opt(subFilter)
@@ -159,29 +165,17 @@ func (landscape *CutCornersLandscape) SubscribeSourceChange(
 		// TODO: assert board is valid and within our domain
 		filter[id] = struct{}{}
 	}
-	return landscape.subscribeSourceChange(ctx, filter)
-}
-
-func (*CutCornersLandscape) SubscribeLogAppend(
-	ctx context.Context,
-	options ...SubscriptionOption,
-) (
-	<-chan *BoardLog, error,
-) {
-	log.Panic("not implemented")
-	return nil, nil
+	return landscape.subscribe(ctx, filter)
 }
 
 //------------------------------------------------------------------------------
 // Private functions
 
-func (landscape *CutCornersLandscape) subscribeSourceChange(
+func (landscape *CutCornersLandscape) subscribe(
 	ctx context.Context,
 	filter map[threads.BoardID]struct{},
-) (
-	<-chan *SourceChange, error,
-) {
-	channel := make(chan *SourceChange)
+) <-chan LandscapeEvent {
+	channel := make(chan LandscapeEvent)
 	go func() {
 		defer close(channel)
 		listener := landscape.bus.Listen()
@@ -194,19 +188,22 @@ func (landscape *CutCornersLandscape) subscribeSourceChange(
 				if !ok {
 					return
 				}
-				if sourceChange, ok := event.(*SourceChange); ok {
+				if landscapeEvent, ok := event.(LandscapeEvent); ok {
 					if len(filter) > 0 {
-						if _, ok := filter[sourceChange.BoardID]; ok {
-							channel <- sourceChange
+						if _, ok := filter[landscapeEvent.BoardID()]; ok {
+							channel <- landscapeEvent
 						}
 					} else {
-						channel <- sourceChange
+						channel <- landscapeEvent
 					}
+				} else {
+					log.Panicf("only expecting LandscapeEvent on listener (event: %v)",
+						landscapeEvent)
 				}
 			}
 		}
 	}()
-	return channel, nil
+	return channel
 }
 
 func unmarshalPrivateKey(k string) p2pcrypto.PrivKey {

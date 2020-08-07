@@ -19,15 +19,15 @@ type NodeProvider func(context.Context, *cfg.Config) (*Node, landscape.Landscape
 func DefaultNewNode(ctx context.Context, config *cfg.Config) (*Node, landscape.Landscape, error) {
 	// TODO: replace nils
 
-	l := landscape.NewDefaultLandscape()
+	log.Panicf("proper landscape not yet implemented")
 
-
-	n, err := NewNode(ctx, defaultNetworkPrivateKey(config), nil, config)
+	n, err := NewNode(ctx, nil, defaultNetworkPrivateKey(config),
+		nil, config)
 	if err != nil {
 		log.Panicf("failed to create a new node: %w", err)
 	}
 
-	return n, l, err
+	return n, nil, err
 }
 
 func defaultNetworkPrivateKey(config *cfg.Config) NetworkPrivateKeyProvider {

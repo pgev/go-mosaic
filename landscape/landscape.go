@@ -19,62 +19,10 @@ var (
 // Specifically Peers are assigned to Boards on the contract
 type Landscape interface {
 	service.Service
+
+	GetAssignments(p2ppeer.ID) ([]threads.BoardID, error)
 	GetSources(threads.BoardID) []p2ppeer.ID
 	GetPeers(threads.BoardID) []p2ppeer.AddrInfo
-	// Subscription to source changes of (one, or more or all) board(s)
-	SubscribeSourceChange(ctx context.Context,
-		options ...SubscriptionOption) (<-chan *SourceChange, error)
-	SubscribeLogAppend(ctx context.Context,
-		options ...SubscriptionOption) (<-chan *BoardLog, error)
-}
-
-type defaultLandscape struct {
-	service.BaseService
-	// TODO: landscape has datastore for board memberships
-}
-
-// NewDefaultLandscape provides a (currently empty!) default landscape
-// TODO: default to Ethereum or testnet Goerli
-func NewDefaultLandscape() Landscape {
-
-	dl := &defaultLandscape{}
-	dl.BaseService = *service.NewBaseService("DefaultLandscape", dl)
-
-	return dl
-}
-
-func (*defaultLandscape) GetPeers(threads.BoardID) []p2ppeer.AddrInfo {
-	log.Panicf("GetPeers not implemented for default landscape")
-	return nil
-}
-
-func (*defaultLandscape) GetSources(threads.BoardID) []p2ppeer.ID {
-	log.Panicf("GetSources not implemented for default landscape")
-	return nil
-}
-
-func (*defaultLandscape) OnStart() error {
-	return nil
-}
-
-func (*defaultLandscape) OnStop() {}
-
-func (*defaultLandscape) SubscribeSourceChange(
-	ctx context.Context,
-	options ...SubscriptionOption,
-) (
-	<-chan *SourceChange, error,
-) {
-	log.Panic("not implemented")
-	return nil, nil
-}
-
-func (d *defaultLandscape) SubscribeLogAppend(
-	ctx context.Context,
-	options ...SubscriptionOption,
-) (
-	<-chan *BoardLog, error,
-) {
-	log.Panic("not implemented")
-	return nil, nil
+	Subscribe(ctx context.Context,
+		options ...SubscriptionOption) <-chan LandscapeEvent
 }

@@ -8,8 +8,9 @@ import (
 	p2ppeer "github.com/libp2p/go-libp2p-core/peer"
 
 	cfg "github.com/mosaicdao/go-mosaic/config"
+	lnd "github.com/mosaicdao/go-mosaic/landscape"
 	"github.com/mosaicdao/go-mosaic/libs/service"
-	"github.com/mosaicdao/go-mosaic/threads"
+	sc "github.com/mosaicdao/go-mosaic/scout"
 	thr "github.com/mosaicdao/go-mosaic/threads"
 )
 
@@ -30,6 +31,7 @@ type Node struct {
 	networkKey p2pcrypto.PrivKey
 
 	threads thr.ThreadsNetwork
+	scout   sc.Scout
 }
 
 type NetworkPrivateKeyProvider func(config *cfg.Config) (p2pcrypto.PrivKey, error)
@@ -38,6 +40,7 @@ type BootstrapListProvider func() []p2ppeer.AddrInfo
 
 // NewNode creates a new node based on the configuration provided
 func NewNode(ctx context.Context,
+	landscape lnd.Landscape,
 	networkPrivateKeyProvider NetworkPrivateKeyProvider,
 	bootstrapListProvider BootstrapListProvider,
 	config *cfg.Config) (*Node, error) {
@@ -60,11 +63,18 @@ func NewNode(ctx context.Context,
 		return nil, err
 	}
 
+	scout, err := sc.NewScout(childCtx, landscape, threads)
+	if err != nil {
+		childCancel()
+		return nil, err
+	}
+
 	node := &Node{
 		config:      config,
 		childCancel: childCancel,
 		networkKey:  netKey,
 		threads:     threads,
+		scout:       scout,
 	}
 	node.BaseService = *service.NewBaseService("Node", node)
 
@@ -79,6 +89,11 @@ func (n *Node) OnStart() error {
 		log.Errorf("failed to start threads: %w", err)
 		return err
 	}
+
+	if err := n.scout.Start(); err != nil {
+		log.Errorf("failed to start scout: %w", err)
+		return err
+	}
 	return nil
 }
 
@@ -86,7 +101,7 @@ func (n *Node) OnStop() {
 	n.close()
 }
 
-func (n *Node) Threads() threads.ThreadsNetwork {
+func (n *Node) Threads() thr.ThreadsNetwork {
 	return n.threads
 }
 

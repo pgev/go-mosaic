@@ -23,7 +23,7 @@ func CutCornersNewNode(ctx context.Context, config *cfg.Config) (*Node, landscap
 	ccl := landscape.CreateCutCornersLandscape()
 
 	n, err := NewNode(
-		ctx, cutCornerNetworkPrivateKey(ccl), cutCornerBootstrapPeers(ccl), config,
+		ctx, ccl, cutCornerNetworkPrivateKey(ccl), cutCornerBootstrapPeers(ccl), config,
 	)
 	if err != nil {
 		log.Panicf("failed to create a new node: %w", err)
