@@ -1,4 +1,4 @@
-package threads
+package boards
 
 type Source struct {
 	BoardID BoardID

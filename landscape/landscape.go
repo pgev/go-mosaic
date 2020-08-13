@@ -7,11 +7,11 @@ import (
 	p2ppeer "github.com/libp2p/go-libp2p-core/peer"
 
 	"github.com/mosaicdao/go-mosaic/libs/service"
-	"github.com/mosaicdao/go-mosaic/threads"
+	"github.com/mosaicdao/go-mosaic/boards"
 )
 
 var (
-	log = logging.Logger("mosaic")
+	log = logging.Logger("landscape")
 )
 
 // Landscape provides a place for the node to explore and interact with
@@ -20,9 +20,9 @@ var (
 type Landscape interface {
 	service.Service
 
-	GetAssignments(p2ppeer.ID) ([]threads.BoardID, error)
-	GetSources(threads.BoardID) []p2ppeer.ID
-	GetPeers(threads.BoardID) []p2ppeer.AddrInfo
+	GetAssignments(p2ppeer.ID) ([]boards.BoardID, error)
+	GetSources(boards.BoardID) []p2ppeer.ID
+	GetPeers(boards.BoardID) []p2ppeer.AddrInfo
 	Subscribe(ctx context.Context,
 		options ...SubscriptionOption) <-chan LandscapeEvent
 }

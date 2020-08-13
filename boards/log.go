@@ -1,4 +1,4 @@
-package threads
+package boards
 
 // LogID defines type of log id.
 type LogID string

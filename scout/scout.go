@@ -6,7 +6,7 @@ import (
 	p2ppeer "github.com/libp2p/go-libp2p-core/peer"
 	lnd "github.com/mosaicdao/go-mosaic/landscape"
 	"github.com/mosaicdao/go-mosaic/libs/service"
-	thr "github.com/mosaicdao/go-mosaic/threads"
+	brd "github.com/mosaicdao/go-mosaic/boards"
 )
 
 type Scout interface {
@@ -19,22 +19,22 @@ type scout struct {
 	cancel context.CancelFunc
 
 	landscape lnd.Landscape
-	threads   thr.ThreadsNetwork
+	boards    brd.BoardsManager
 	peerID    p2ppeer.ID
-	policy    []thr.BoardID
+	policy    []brd.BoardID
 }
 
 func NewScout(
 	ctx context.Context,
 	landscape lnd.Landscape,
-	threads thr.ThreadsNetwork,
+	boards brd.BoardsManager,
 ) (
 	Scout, error,
 ) {
 	s := &scout{
 		landscape: landscape,
-		threads:   threads,
-		peerID:    threads.Host().ID(),
+		boards:    boards,
+		peerID:    boards.Host().ID(),
 		policy:    nil,
 	}
 	s.BaseService = *service.NewBaseService("scout", s)
@@ -89,27 +89,16 @@ func (s *scout) doScouting(ctx context.Context) {
 			}
 			switch event.(type) {
 			case *lnd.SourceChangeEvent:
-
+				// TODO: continue to use events to trigger actions on boards
 			case *lnd.PeerInfoUpdateEvent:
 			}
 		}
 	}
-
-	//old stuff
-	// boardIDs := s.landscape.GetAssignments(s.peerID)
-
-	// var peers []p2ppeer.AddrInfo
-	// var peerIDtoPeer map[p2ppeer.ID]p2peer.AddrInfo
-
-	// for _, boardID := range boardIDs {
-	// 	newPeers = s.landscape.GetPeers(boardID)
-	// 	for _, peer := range newPeers
-	// }
 }
 
 func (s *scout) deriveBoardFilter() lnd.SubscriptionOption {
 	// TODO: expand on policy
-	p := make([]thr.BoardID, len(s.policy))
+	p := make([]brd.BoardID, len(s.policy))
 	// TODO: should we deep copy?
 	copy(p, s.policy)
 	return lnd.WithBoardFilter(p)

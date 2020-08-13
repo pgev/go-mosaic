@@ -12,6 +12,8 @@ import (
 //-----------------------------------------------------------------------------
 // ThreadsConfig
 
+// TODO: rename to BoardsConfig, and complete for Boards
+
 // ThreadsConfig defines the configuration options for the threads management
 type ThreadsConfig struct {
 	WorkDir                  string        `mapstring:"work_dir"`

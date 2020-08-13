@@ -42,7 +42,7 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 				for {
 					time.Sleep(5 * time.Second)
 					fmt.Printf("connected peers (%v)\n",
-						node.Threads().Host().Network().Peers(),
+						node.BoardsManager().Host().Network().Peers(),
 					)
 				}
 			}()
@@ -52,9 +52,9 @@ func NewRunNodeCmd(nodeProvider node.NodeProvider) *cobra.Command {
 					time.Sleep(2 * time.Second)
 					members := landscape.GetPeers("")
 					for _, member := range members {
-						if member.ID != node.Threads().Host().ID() {
+						if member.ID != node.BoardsManager().Host().ID() {
 							fmt.Printf("Adding peer %s\n", member.ID.String())
-							node.Threads().Host().Peerstore().AddAddrs(
+							node.BoardsManager().Host().Peerstore().AddAddrs(
 								member.ID,
 								member.Addrs,
 								p2ppeerstore.PermanentAddrTTL,

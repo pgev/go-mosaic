@@ -11,7 +11,7 @@ import (
 	lnd "github.com/mosaicdao/go-mosaic/landscape"
 	"github.com/mosaicdao/go-mosaic/libs/service"
 	sc "github.com/mosaicdao/go-mosaic/scout"
-	thr "github.com/mosaicdao/go-mosaic/threads"
+	brd "github.com/mosaicdao/go-mosaic/boards"
 )
 
 var (
@@ -30,7 +30,7 @@ type Node struct {
 	// keys in the node. TODO: improve key management
 	networkKey p2pcrypto.PrivKey
 
-	threads thr.ThreadsNetwork
+	boards  brd.BoardsManager
 	scout   sc.Scout
 }
 
@@ -53,7 +53,7 @@ func NewNode(ctx context.Context,
 		return nil, err
 	}
 
-	threads, err := thr.NewThreadsNetwork(
+	boards, err := brd.NewBoardsManager(
 		childCtx, netKey, bootstrapListProvider(), config.Threads,
 	)
 	if err != nil {
@@ -63,7 +63,7 @@ func NewNode(ctx context.Context,
 		return nil, err
 	}
 
-	scout, err := sc.NewScout(childCtx, landscape, threads)
+	scout, err := sc.NewScout(childCtx, landscape, boards)
 	if err != nil {
 		childCancel()
 		return nil, err
@@ -73,7 +73,7 @@ func NewNode(ctx context.Context,
 		config:      config,
 		childCancel: childCancel,
 		networkKey:  netKey,
-		threads:     threads,
+		boards:      boards,
 		scout:       scout,
 	}
 	node.BaseService = *service.NewBaseService("Node", node)
@@ -84,9 +84,9 @@ func NewNode(ctx context.Context,
 }
 
 func (n *Node) OnStart() error {
-	if err := n.threads.Start(); err != nil {
-		// TODO: properly close off threads which already has datastores active
-		log.Errorf("failed to start threads: %w", err)
+	if err := n.boards.Start(); err != nil {
+		// TODO: properly close off boards which already has datastores active
+		log.Errorf("failed to start boards: %w", err)
 		return err
 	}
 
@@ -101,8 +101,8 @@ func (n *Node) OnStop() {
 	n.close()
 }
 
-func (n *Node) Threads() thr.ThreadsNetwork {
-	return n.threads
+func (n *Node) BoardsManager() brd.BoardsManager {
+	return n.boards
 }
 
 //------------------------------------------------------------------------------
@@ -114,6 +114,6 @@ func (n *Node) autoclose(ctx context.Context) {
 }
 
 func (n *Node) close() {
-	n.threads.Stop()
+	n.boards.Stop()
 	n.childCancel()
 }

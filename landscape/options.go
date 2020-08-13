@@ -1,17 +1,17 @@
 package landscape
 
 import (
-	"github.com/mosaicdao/go-mosaic/threads"
+	"github.com/mosaicdao/go-mosaic/boards"
 )
 
 // SubscriptionFilter
 type SubscriptionFilter struct {
-	boardIDs []threads.BoardID
+	boardIDs []boards.BoardID
 }
 
 type SubscriptionOption func(*SubscriptionFilter)
 
-func WithBoardFilter(boardIDs []threads.BoardID) SubscriptionOption {
+func WithBoardFilter(boardIDs []boards.BoardID) SubscriptionOption {
 	return func(subFilter *SubscriptionFilter) {
 		subFilter.boardIDs = append(subFilter.boardIDs, boardIDs...)
 	}

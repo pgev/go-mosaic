@@ -1,4 +1,4 @@
-package threads
+package boards
 
 import (
 	"context"
@@ -35,37 +35,37 @@ var (
 	grey  = color.New(color.FgHiBlack).SprintFunc()
 	green = color.New(color.FgHiGreen).SprintFunc()
 
-	log = logging.Logger("threads")
+	log = logging.Logger("boards")
 )
 
 type notifee struct {
-	t ThreadsNetwork
+	b BoardsManager
 }
 
 func (n *notifee) HandlePeerFound(p p2ppeer.AddrInfo) {
 	log.Infof("found peer %v, adding to peerstore", p)
-	n.t.Host().Peerstore().AddAddrs(
+	n.b.Host().Peerstore().AddAddrs(
 		p.ID,
 		p.Addrs,
 		peerstore.ConnectedAddrTTL,
 	)
 }
 
-type ThreadsNetwork interface {
+type BoardsManager interface {
 	service.Service
 
 	Host() host.Host
 	Peerstore() peerstore.Peerstore
 }
 
-// Threads provides a Threads network, and implements Servicable and Service.
-type threads struct {
+// Boards implements a BoardsManager, and implements Servicable and Service.
+type boards struct {
 	service.BaseService
 
 	// cancel dependent goroutines
 	childCancel context.CancelFunc
 
-	api app.Net // provides Connection
+	api app.Net // provides threads network connection to boards manager
 
 	hostAddress    mfma.Multiaddr
 	bootstrapPeers []p2ppeer.AddrInfo
@@ -79,15 +79,15 @@ type threads struct {
 	mdns discovery.Service
 }
 
-var _ (ThreadsNetwork) = (*threads)(nil)
+var _ (BoardsManager) = (*boards)(nil)
 
-// NewThreadsNetwork provides a ThreadsNetwork interface to a new instance.
-// The ThreadsNetwork must be started by calling Start() before use.
-func NewThreadsNetwork(
+// NewBoardsManager provides a BoardsManager interface to a new instance of boards.
+// The BoardsManager must be started by calling Start() before use.
+func NewBoardsManager(
 	ctx context.Context,
 	privateNetworkKey crypto.PrivKey,
 	bootstrapPeers []p2ppeer.AddrInfo,
-	config *cfg.ThreadsConfig) (ThreadsNetwork, error) {
+	config *cfg.ThreadsConfig) (BoardsManager, error) {
 	// TODO: take config for OnStart to work
 
 	connManager := setupConnectionManager(
@@ -140,7 +140,7 @@ func NewThreadsNetwork(
 		return nil, err
 	}
 
-	t := &threads{
+	b := &boards{
 		childCancel:    childCancel,
 		api:            api,
 		hostAddress:    hostAddress,
@@ -152,39 +152,39 @@ func NewThreadsNetwork(
 		litedatastore:  litedatastore,
 		logdatastore:   logdatastore,
 	}
-	t.BaseService = *service.NewBaseService("ThreadsNetwork", t)
+	b.BaseService = *service.NewBaseService("BoardsManager", b)
 
-	go t.autoclose(ctx)
+	go b.autoclose(ctx)
 
-	return t, nil
+	return b, nil
 }
 
-func (t *threads) OnStart() error {
+func (b *boards) OnStart() error {
 
 	// bootstrap peers; for bigfish project, piggyback on the threadsDB
 	// and IPFS public bootstrap peers
 	// TODO: refine where to bootstrap from depending on known Column members
-	t.peer.Bootstrap(t.bootstrapPeers)
+	b.peer.Bootstrap(b.bootstrapPeers)
 
 	// Build a MDNS service
 	ctx := context.Background()
-	mdns, err := discovery.NewMdnsService(ctx, t.api.Host(), time.Second, "")
+	mdns, err := discovery.NewMdnsService(ctx, b.api.Host(), time.Second, "")
 	if err != nil {
 		log.Warnf("fatal error creating MDNS service: %w", err)
 		return err
 	}
 	notifee := &notifee{
-		t: t,
+		b: b,
 	}
 	mdns.RegisterNotifee(notifee)
-	t.mdns = mdns
+	b.mdns = mdns
 	// Start the prompt
 	fmt.Println(grey("Welcome to MOSAIC!"))
-	fmt.Println(grey("Your peer ID is ") + green(t.Host().ID().String()))
-	fmt.Printf("Listening on addresses: %v\n", t.Host().Addrs())
+	fmt.Println(grey("Your peer ID is ") + green(b.Host().ID().String()))
+	fmt.Printf("Listening on addresses: %v\n", b.Host().Addrs())
 
-	// subscribe to threads without any filter options
-	sub, err := t.api.Subscribe(ctx)
+	// subscribe to threads network without any filter options
+	sub, err := b.api.Subscribe(ctx)
 	if err != nil {
 		log.Errorf("failed to subscribe to threads network: %w", err)
 	}
@@ -200,17 +200,17 @@ func (t *threads) OnStart() error {
 	return nil
 }
 
-func (t *threads) OnStop() {
+func (b *boards) OnStop() {
 	// close all depending goroutines
-	t.close()
+	b.close()
 }
 
-func (t *threads) Host() host.Host {
-	return t.host
+func (b *boards) Host() host.Host {
+	return b.host
 }
 
-func (t *threads) Peerstore() peerstore.Peerstore {
-	return t.peerstore
+func (b *boards) Peerstore() peerstore.Peerstore {
+	return b.peerstore
 }
 
 //------------------------------------------------------------------------------
@@ -318,35 +318,35 @@ func createNetworkAPI(
 	return api, nil
 }
 
-func (t *threads) autoclose(ctx context.Context) {
+func (b *boards) autoclose(ctx context.Context) {
 	<-ctx.Done()
 	log.Info("threads network autoclosing")
-	t.close()
+	b.close()
 }
 
-func (t *threads) close() {
+func (b *boards) close() {
 	// close datastores and dependencies
-	if err := t.api.Close(); err != nil {
+	if err := b.api.Close(); err != nil {
 		log.Warnf("error closing threads network API: %w", err)
 	}
 	// IPFSLite t.peer is autoclosed by cancel()
-	t.childCancel()
-	if err := t.dht.Close(); err != nil {
+	b.childCancel()
+	if err := b.dht.Close(); err != nil {
 		log.Warnf("error closing DHT: %w", err)
 	}
-	if err := t.host.Close(); err != nil {
+	if err := b.host.Close(); err != nil {
 		log.Warnf("errror closing host: %w", err)
 	}
-	if err := t.peerstore.Close(); err != nil {
+	if err := b.peerstore.Close(); err != nil {
 		log.Warnf("error closing peerstore: %w", err)
 	}
-	if err := t.litedatastore.Close(); err != nil {
+	if err := b.litedatastore.Close(); err != nil {
 		log.Warnf("error closing litedatastore: %w", err)
 	}
-	if err := t.logdatastore.Close(); err != nil {
+	if err := b.logdatastore.Close(); err != nil {
 		log.Warnf("error closing logdatastore: %w", err)
 	}
-	if err := t.mdns.Close(); err != nil {
+	if err := b.mdns.Close(); err != nil {
 		log.Warnf("error closing mdns: %w", err)
 	}
 }

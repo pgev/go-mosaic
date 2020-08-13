@@ -1,4 +1,4 @@
-package threads
+package boards
 
 // TopicID defines type of id of topic.
 type TopicID byte

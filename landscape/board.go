@@ -1,15 +1,15 @@
 package landscape
 
 import (
-	"github.com/mosaicdao/go-mosaic/threads"
+	"github.com/mosaicdao/go-mosaic/boards"
 )
 
 type SourceChange struct {
-	BoardID        threads.BoardID
-	addedSources   []threads.LogID
-	removedSources []threads.LogID
+	BoardID        boards.BoardID
+	addedSources   []boards.LogID
+	removedSources []boards.LogID
 }
 
 type BoardLog struct {
-	BoardID threads.BoardID
+	BoardID boards.BoardID
 }

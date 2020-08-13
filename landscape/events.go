@@ -3,7 +3,7 @@ package landscape
 import (
 	p2ppeer "github.com/libp2p/go-libp2p-core/peer"
 
-	"github.com/mosaicdao/go-mosaic/threads"
+	"github.com/mosaicdao/go-mosaic/boards"
 )
 
 const (
@@ -13,17 +13,17 @@ const (
 
 type LandscapeEvent interface {
 	String() string
-	BoardID() threads.BoardID
+	BoardID() boards.BoardID
 }
 
 //------------------------------------------------------------------------------
 // SourceChange event
 
 type SourceChangeEvent struct {
-	boardID threads.BoardID
+	boardID boards.BoardID
 }
 
-func NewSourceChangeEvent(boardID threads.BoardID) LandscapeEvent {
+func NewSourceChangeEvent(boardID boards.BoardID) LandscapeEvent {
 	s := &SourceChangeEvent{
 		boardID: boardID,
 	}
@@ -35,7 +35,7 @@ func (*SourceChangeEvent) String() string {
 	return sourceChangeEventName
 }
 
-func (s *SourceChangeEvent) BoardID() threads.BoardID {
+func (s *SourceChangeEvent) BoardID() boards.BoardID {
 	return s.boardID
 }
 
@@ -43,7 +43,7 @@ func (s *SourceChangeEvent) BoardID() threads.BoardID {
 // PeerAddrInfoUpdate event
 
 type PeerInfoUpdateEvent struct {
-	boardID  threads.BoardID
+	boardID  boards.BoardID
 	addrInfo p2ppeer.AddrInfo
 	// distance between the location of the peer and the board
 	// on the circuit
@@ -51,7 +51,7 @@ type PeerInfoUpdateEvent struct {
 }
 
 func NewPeerInfoUpdateEvent(
-	boardID threads.BoardID,
+	boardID boards.BoardID,
 	addrInfo p2ppeer.AddrInfo,
 	distance uint64,
 ) LandscapeEvent {
@@ -62,7 +62,7 @@ func NewPeerInfoUpdateEvent(
 	}
 }
 
-func (p *PeerInfoUpdateEvent) BoardID() threads.BoardID {
+func (p *PeerInfoUpdateEvent) BoardID() boards.BoardID {
 	return p.boardID
 }
 

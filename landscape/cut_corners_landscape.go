@@ -11,7 +11,7 @@ import (
 	txtthread "github.com/textileio/go-threads/core/thread"
 
 	"github.com/mosaicdao/go-mosaic/libs/service"
-	"github.com/mosaicdao/go-mosaic/threads"
+	"github.com/mosaicdao/go-mosaic/boards"
 )
 
 // CutCornersLandscape is a temporary struct to have a hard-coded, shared threadsId
@@ -134,19 +134,19 @@ func (*CutCornersLandscape) OnStart() error {
 func (*CutCornersLandscape) OnStop() {}
 
 // GetAssignments returns the boards the given peer is assigned to
-func (*CutCornersLandscape) GetAssignments(peerID p2ppeer.ID) ([]threads.BoardID, error) {
-	b := []threads.BoardID{threads.BoardID(boardIDStr)}
+func (*CutCornersLandscape) GetAssignments(peerID p2ppeer.ID) ([]boards.BoardID, error) {
+	b := []boards.BoardID{boards.BoardID(boardIDStr)}
 	return b, nil
 }
 
 // GetSources provides an array of LogID/PeerId for sources present on the board.
-func (landscape *CutCornersLandscape) GetSources(threads.BoardID) []p2ppeer.ID {
+func (landscape *CutCornersLandscape) GetSources(boards.BoardID) []p2ppeer.ID {
 	return memberPeerIDs
 }
 
 // GetAddrInfo returns an array of peers and their address info, who are likely
 // to hold the logs of the given board, based on the contract look up table
-func (landscape *CutCornersLandscape) GetPeers(threads.BoardID) []p2ppeer.AddrInfo {
+func (landscape *CutCornersLandscape) GetPeers(boards.BoardID) []p2ppeer.AddrInfo {
 	return memberAddrInfos
 }
 
@@ -160,7 +160,7 @@ func (landscape *CutCornersLandscape) Subscribe(
 		opt(subFilter)
 	}
 
-	filter := make(map[threads.BoardID]struct{})
+	filter := make(map[boards.BoardID]struct{})
 	for _, id := range subFilter.boardIDs {
 		// TODO: assert board is valid and within our domain
 		filter[id] = struct{}{}
@@ -173,7 +173,7 @@ func (landscape *CutCornersLandscape) Subscribe(
 
 func (landscape *CutCornersLandscape) subscribe(
 	ctx context.Context,
-	filter map[threads.BoardID]struct{},
+	filter map[boards.BoardID]struct{},
 ) <-chan LandscapeEvent {
 	channel := make(chan LandscapeEvent)
 	go func() {
