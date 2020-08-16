@@ -7,8 +7,7 @@ type TopicID byte
 type BoardID string
 
 type Message struct {
-	Sender       *Sender
-	BoardID      BoardID
+	Source       *Source
 	TopicID      TopicID
 	PayloadBytes []byte
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/mosaicdao/go-mosaic/libs/service"
 )
 
+
+
 // Switch defines a switch struct.
 type Switch struct {
 	service.BaseService

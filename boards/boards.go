@@ -73,8 +73,9 @@ type boards struct {
 	host           host.Host
 	dht            *dual.DHT
 	peerstore      peerstore.Peerstore
-	litedatastore  datastore.Datastore
-	logdatastore   datastore.Datastore
+	liteDatastore  datastore.Datastore
+	logDatastore   datastore.Datastore
+	viewDatastore  datastore.Datastore
 
 	mdns discovery.Service
 }
@@ -103,8 +104,13 @@ func NewBoardsManager(
 
 	childCtx, childCancel := context.WithCancel(ctx)
 
+	_, err = createViewDatastore(
+		childCtx,
+		config.ViewStorePath(),
+	)
+
 	// create IPFS Lite Peer
-	litedatastore, peerstore, peer, host, dht, err := createIpfsLitePeer(
+	liteDatastore, peerstore, peer, host, dht, err := createIpfsLitePeer(
 		childCtx,
 		config.IpfsLitePath(),
 		privateNetworkKey,
@@ -117,13 +123,13 @@ func NewBoardsManager(
 	}
 
 	// build a log store
-	logdatastore, logstore, err := createLogStore(
+	logDatastore, logstore, err := createLogStore(
 		childCtx,
 		config.LogStorePath(),
 	)
 	if err != nil {
 		childCancel()
-		litedatastore.Close()
+		liteDatastore.Close()
 		return nil, err
 	}
 
@@ -135,8 +141,8 @@ func NewBoardsManager(
 	)
 	if err != nil {
 		childCancel()
-		litedatastore.Close()
-		logdatastore.Close()
+		liteDatastore.Close()
+		logDatastore.Close()
 		return nil, err
 	}
 
@@ -149,8 +155,8 @@ func NewBoardsManager(
 		host:           host,
 		dht:            dht,
 		peerstore:      peerstore,
-		litedatastore:  litedatastore,
-		logdatastore:   logdatastore,
+		liteDatastore:  liteDatastore,
+		logDatastore:   logDatastore,
 	}
 	b.BaseService = *service.NewBaseService("BoardsManager", b)
 
@@ -218,6 +224,20 @@ func (b *boards) Peerstore() peerstore.Peerstore {
 
 func setupConnectionManager(low, high int, grace time.Duration) corecm.ConnManager {
 	return cm.NewConnManager(low, high, grace)
+}
+
+func createViewDatastore(
+	ctx context.Context,
+	viewDatastorePath string,
+) (
+	datastore.Datastore,
+	error,
+) {
+	vs, err := badger.NewDatastore(viewDatastorePath, &badger.DefaultOptions)
+	if err != nil {
+		return nil, err
+	}
+	return vs, nil
 }
 
 func createIpfsLitePeer(
@@ -340,10 +360,10 @@ func (b *boards) close() {
 	if err := b.peerstore.Close(); err != nil {
 		log.Warnf("error closing peerstore: %w", err)
 	}
-	if err := b.litedatastore.Close(); err != nil {
+	if err := b.liteDatastore.Close(); err != nil {
 		log.Warnf("error closing litedatastore: %w", err)
 	}
-	if err := b.logdatastore.Close(); err != nil {
+	if err := b.logDatastore.Close(); err != nil {
 		log.Warnf("error closing logdatastore: %w", err)
 	}
 	if err := b.mdns.Close(); err != nil {
