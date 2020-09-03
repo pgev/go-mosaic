@@ -189,17 +189,11 @@ func (b *boards) OnStart() error {
 	fmt.Println(grey("Your peer ID is ") + green(b.Host().ID().String()))
 	fmt.Printf("Listening on addresses: %v\n", b.Host().Addrs())
 
-	// subscribe to threads network without any filter options
-	sub, err := b.api.Subscribe(ctx)
-	if err != nil {
-		log.Errorf("failed to subscribe to threads network: %w", err)
-	}
+	// TODO: setup the databus
+	// TODO: setup the boards with funnels subscribing to databus
 
-	go func() {
-		for rec := range sub {
-			fmt.Printf("got new record: %v", rec)
-		}
-	}()
+	go b.subscribeToSingleWriterLogs(ctx)
+
 
 	// place to handle subscription updates (later)
 	// incoming records of (new) logIds, parse messages and passed to switch
@@ -221,6 +215,21 @@ func (b *boards) Peerstore() peerstore.Peerstore {
 
 //------------------------------------------------------------------------------
 // Private functions
+
+func (b *boards) subscribeToSingleWriterLogs(ctx context.Context) error {
+	// subscribe to threads network without filter options, receiving all threads
+	sub, err := b.api.Subscribe(ctx)
+	if err != nil {
+		log.Errorf("failed to subscribe to threads network: %w", err)
+		return err
+	}
+
+	for rec := range sub {
+		fmt.Printf("got new record: %v", rec)
+	}
+
+	return nil
+}
 
 func setupConnectionManager(low, high int, grace time.Duration) corecm.ConnManager {
 	return cm.NewConnManager(low, high, grace)

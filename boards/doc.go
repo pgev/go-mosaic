@@ -41,24 +41,20 @@ authenticated to participate on the board.
    The BoardsManager internally manages threads, and the policy depends on the
    board type.
    For a gate board, each assigned column overlay has its own thread.
-   For a databus board, all multi-writer-logs share one thread.
-   For an input board, each end-user has their own thread.
-   For an output board, all multi-writer-logs share one thread.
    Note, the implementation starts out simplified with one thread per board;
    later, threads should rotate over time as to rotate (sk, rk) pairs.
 
-4. an Overlay groups sources on a board such that while valid participants of a board,
-   sources can be filtered out. A source can be in multiple overlays.
-   Messages from a source are passed on to the switch only if the source is in
-   at least one overlay, or no overlays are set for a board.
-
-5. the body of a log's record is a protobuf encoded (list of) message(s),
+4. the body of a log's record is a protobuf encoded (list of) message(s),
    where a message has a source, a topicID and a payload.
    (Note, the message will be be extended with additional payment information
    in the header).
-   The payload is passed on to the reactor registered
+   The messages with the payload are passed on to the reactor registered
    for the tuple (boardID, topicID), a "locus", which can additionally pass
    (an accumulation of processed) messages on to the application proxy.
+
+5.
+6. inputs to a board are logs (output batches of a multi-writer-logs or end-user logs)
+   over which the board forms an objective views and output batches
 
 (needs to be continued)
 
