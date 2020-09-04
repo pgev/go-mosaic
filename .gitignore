@@ -8,3 +8,22 @@ main
 
 # vscode config folder
 .vscode/
+
+# OSX
+.DS_Store
+
+# Perforce
+*.orig
+
+# ------------------------------------------------------------------------------
+# Move with webclient
+
+# Typescript
+webclient/dist
+
+# Node
+webclient/node_modules
+
+# Webpack
+webclient/wwww
+# ------------------------------------------------------------------------------

@@ -1,0 +1,77 @@
+{
+  "extends": [
+    "airbnb-base",
+    "plugin:json/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json",
+    "ecmaVersion": 6,
+    "ecmaFeatures": {
+      "jsx": true,
+      "modules": true,
+      "impliedStrict": true
+    }
+  },
+  "plugins": [
+    "json",
+    "@typescript-eslint",
+    "react"
+  ],
+  "rules": {
+    "@typescript-eslint/camelcase": "off",
+    "@typescript-eslint/indent": ["error", 2],
+    "@typescript-eslint/await-thenable": "error",
+    "@typescript-eslint/no-for-in-array": "error",
+    "@typescript-eslint/no-unnecessary-qualifier": "error",
+    "@typescript-eslint/no-unnecessary-type-assertion": "error",
+    "@typescript-eslint/no-extraneous-class": [
+      "error",
+      {
+        "allowStaticOnly":  true
+      }
+    ],
+    "@typescript-eslint/prefer-includes": "error",
+    "@typescript-eslint/restrict-plus-operands": "error",
+    "@typescript-eslint/no-useless-constructor": "error",
+    "@typescript-eslint/unified-signatures": "error",
+    "@typescript-eslint/promise-function-async": [
+      "error",
+      {
+        "checkArrowFunctions": true,
+        "checkFunctionDeclarations": true,
+        "checkFunctionExpressions": true,
+        "checkMethodDeclarations": true
+      }
+    ],
+    "max-classes-per-file": ["error", 1],
+    "lines-between-class-members": ["error", "always", { "exceptAfterSingleLine": true }],
+    "no-console": "off",
+    "no-underscore-dangle": "off",
+    "import/no-extraneous-dependencies": "off",
+    "import/extensions": "off",
+    "strict": "off"
+  },
+  "env": {
+    "es6": true,
+    "browser": true,
+    "mocha": true
+  },
+  "globals": {
+    "artifacts": false,
+    "contract": false,
+    "assert": false
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": ["json", ".js", ".jsx", ".ts", ".tsx", ".d.ts"]
+      }
+    },
+    "react": {
+      "version": "detect"
+    }
+  }
+}
