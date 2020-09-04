@@ -25,5 +25,5 @@ webclient/dist
 webclient/node_modules
 
 # Webpack
-webclient/wwww
+webclient/www
 # ------------------------------------------------------------------------------
