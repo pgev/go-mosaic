@@ -1,14 +1,21 @@
 import React from 'react';
 
 import {
-  Dimensions, StyleSheet, View, Text, TextInput,
+  Button, Dimensions, StyleSheet, View, Text, TextInput,
 } from 'react-native';
 
+import {gql, request} from 'graphql-request';
+
 export type AppProps = {
+  endpoint: string;
 };
 
 export type AppState = {
-  number?: string;
+  value: string;
+}
+
+interface TData {
+  value: string
 }
 
 const styles = StyleSheet.create({
@@ -28,16 +35,63 @@ export default class App extends React.Component<AppProps, AppState> {
     super(props);
 
     this.onChangeText = this.onChangeText.bind(this);
+    this.onUpdate = this.onUpdate.bind(this);
+
+    this.readValue = this.readValue.bind(this);
+    this.updateValue = this.updateValue.bind(this);
 
     this.state = {
-      number: '',
+      value: '',
     };
   }
 
-  onChangeText(number: string): void {
+  onChangeText(value: string): void {
     this.setState({
-      number,
+      value: value,
     });
+  }
+
+  onUpdate(): void {
+    this.updateValue(this.state.value);
+  }
+
+  readValue(): void {
+    const query = gql`
+      {
+        value
+      }
+    `;
+
+    request(
+      this.props.endpoint,
+      query,
+    )
+    .then((data: TData) => {
+      this.setState({
+        value: data.value,
+      });
+    })
+  }
+
+  updateValue(value: string): void {
+    const query = gql`
+      mutation updateValue{$value: String!) {
+      }
+    `;
+    const variables = {
+      value,
+    }
+
+    request(
+      this.props.endpoint,
+      query,
+      variables,
+    )
+    .then((data: TData) => console.log(data))
+  }
+
+  componentDidMount(): void {
+    this.readValue();
   }
 
   render(): JSX.Element {
@@ -47,13 +101,14 @@ export default class App extends React.Component<AppProps, AppState> {
         <View style={{flexDirection: 'row', padding: 2}}>
           <Text>{'Number:'}</Text>
           <TextInput
-            placeholder={'Please, update number ...'}
             keyboardType = 'numeric'
             onChangeText={this.onChangeText}
             maxLength={2}
-            value = {this.state.number}
+            value = {this.state.value}
+            style={{borderWidth: 1}}
           />
         </View>
+        <Button title='Update' onPress={this.onUpdate} />
       </View>
     );
   }

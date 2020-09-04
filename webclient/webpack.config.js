@@ -14,8 +14,26 @@ module.exports = {
 
   module: {
     rules: [
-      { test: /\.js$/, enforce: 'pre', use: ['source-map-loader'] },
-      { test: /\.(js|ts)x?$/, exclude: /node_modules/, use: 'babel-loader' },
+      {
+        test: /\.js$/,
+        enforce: 'pre',
+        exclude: /node_modules/,
+        use: ['source-map-loader'],
+      },
+      {
+        test: /\.(js|ts)x?$/,
+        exclude: /node_modules/,
+        use: [{
+          loader: 'babel-loader',
+          query: {
+          },
+        }],
+      },
+      {
+        exclude: /node_modules/,
+        test: /\.graphql$/,
+        use: [{ loader: 'graphql-import-loader' }],
+      }
     ],
   },
 
