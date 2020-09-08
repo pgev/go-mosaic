@@ -4,7 +4,7 @@ import {
   Button, Dimensions, StyleSheet, View, Text, TextInput,
 } from 'react-native';
 
-import {gql, request} from 'graphql-request';
+import { gql, request } from 'graphql-request';
 
 export type AppProps = {
   endpoint: string;
@@ -15,7 +15,7 @@ export type AppState = {
 }
 
 interface TData {
-  value: string
+  value: string;
 }
 
 const styles = StyleSheet.create({
@@ -47,7 +47,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
   onChangeText(value: string): void {
     this.setState({
-      value: value,
+      value,
     });
   }
 
@@ -66,28 +66,36 @@ export default class App extends React.Component<AppProps, AppState> {
       this.props.endpoint,
       query,
     )
-    .then((data: TData) => {
-      this.setState({
-        value: data.value,
+      .then((data: TData) => {
+        this.setState({
+          value: data.value,
+        });
       });
-    })
   }
 
   updateValue(value: string): void {
     const query = gql`
-      mutation updateValue{$value: String!) {
+      mutation UpdateValue{$value: String!) {
+        updateValue(value: $value) {
+          value
+        }
       }
     `;
+
     const variables = {
       value,
-    }
+    };
 
     request(
       this.props.endpoint,
       query,
       variables,
     )
-    .then((data: TData) => console.log(data))
+      .then((data: TData) => {
+        this.setState({
+          value: data.value,
+        });
+      });
   }
 
   componentDidMount(): void {
@@ -97,15 +105,15 @@ export default class App extends React.Component<AppProps, AppState> {
   render(): JSX.Element {
     return (
       <View style={styles.topContainer}>
-        <Text>{'Number 7 App'}</Text>
-        <View style={{flexDirection: 'row', padding: 2}}>
-          <Text>{'Number:'}</Text>
+        <Text>{'Store Your Secret Number'}</Text>
+        <View style={{ flexDirection: 'row', padding: 2 }}>
+          <Text>{'Your Secret Number:'}</Text>
           <TextInput
             keyboardType = 'numeric'
             onChangeText={this.onChangeText}
             maxLength={2}
             value = {this.state.value}
-            style={{borderWidth: 1}}
+            style={{ borderWidth: 1 }}
           />
         </View>
         <Button title='Update' onPress={this.onUpdate} />
