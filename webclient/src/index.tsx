@@ -4,6 +4,6 @@ import ReactDOM from 'react-dom';
 import App from './App';
 
 ReactDOM.render(
-  <App />,
+  <App endpoint="http://localhost:8081/query" />,
   document.getElementById('root'),
 );

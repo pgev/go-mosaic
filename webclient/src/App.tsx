@@ -11,11 +11,7 @@ export type AppProps = {
 };
 
 export type AppState = {
-  value: string;
-}
-
-interface TData {
-  value: string;
+  secret: string;
 }
 
 const styles = StyleSheet.create({
@@ -37,53 +33,56 @@ export default class App extends React.Component<AppProps, AppState> {
     this.onChangeText = this.onChangeText.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
 
-    this.readValue = this.readValue.bind(this);
-    this.updateValue = this.updateValue.bind(this);
-
     this.state = {
-      value: '',
+      secret: '',
     };
   }
 
-  onChangeText(value: string): void {
+  onChangeText(secret: string): void {
     this.setState({
-      value,
+      secret,
     });
   }
 
   onUpdate(): void {
-    this.updateValue(this.state.value);
+    this.updateSecret(this.state.secret);
   }
 
-  readValue(): void {
+  readSecret(): void {
     const query = gql`
       {
-        value
+        Secret {
+          Value
+        }
       }
     `;
-
     request(
       this.props.endpoint,
       query,
     )
-      .then((data: TData) => {
+      .then((data: any) => {
+        console.log('Reading ...');
+        console.log(data);
         this.setState({
-          value: data.value,
+          secret: data.Secret.Value,
         });
+      })
+      .catch((reason: any) => {
+        console.error(reason);
       });
   }
 
-  updateValue(value: string): void {
+  updateSecret(secret: string): void {
     const query = gql`
-      mutation UpdateValue{$value: String!) {
-        updateValue(value: $value) {
-          value
+      mutation($secret: String!) {
+        UpdateSecretValue(Secret: $secret) {
+          Value
         }
       }
     `;
 
     const variables = {
-      value,
+      secret,
     };
 
     request(
@@ -91,28 +90,30 @@ export default class App extends React.Component<AppProps, AppState> {
       query,
       variables,
     )
-      .then((data: TData) => {
+      .then((data: any) => {
         this.setState({
-          value: data.value,
+          secret: data.UpdateSecretValue.Value,
         });
+      })
+      .catch((reason: any) => {
+        console.error(reason);
       });
   }
 
   componentDidMount(): void {
-    this.readValue();
+    this.readSecret();
   }
 
   render(): JSX.Element {
     return (
       <View style={styles.topContainer}>
-        <Text>{'Store Your Secret Number'}</Text>
+        <Text>{'Store Your Secret'}</Text>
         <View style={{ flexDirection: 'row', padding: 2 }}>
-          <Text>{'Your Secret Number:'}</Text>
+          <Text>{'Your Secret:'}</Text>
           <TextInput
-            keyboardType = 'numeric'
             onChangeText={this.onChangeText}
-            maxLength={2}
-            value = {this.state.value}
+            maxLength={100}
+            value = {this.state.secret}
             style={{ borderWidth: 1 }}
           />
         </View>
